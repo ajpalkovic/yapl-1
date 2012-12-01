@@ -29,14 +29,7 @@
     }
 
     function parseCode(code, lineOffset) {
-      var tree = parser.parse(code, lineOffset);
-      return $node('closure', [
-        $node('parameter_list'),
-        $node('function_body', [tree])
-      ], [
-        'parameters',
-        'body'
-      ]);
+      return parser.parse(code, lineOffset);
     }
 
     var interpolations = [];

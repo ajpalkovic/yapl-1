@@ -218,7 +218,7 @@
       this.cache = {};
 
       this.lexer = new Lexer(input, lineOffset);
-      var tree = this._parse('InterpolationBody', 0, {});
+      var tree = this._parse('Expression', 0, {});
 
       // tree can be null, means there was just no value.
       if (tree === undefined) this.error();

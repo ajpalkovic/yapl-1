@@ -42,6 +42,18 @@
       this.classContext = classContext;
       this.context = context;
       this.fields = parentScope ? $.extend({}, false, parentScope.fields) : {};
+
+      // We need to do this because if the user declares a variable with the same name
+      // as a native property in JS (toString) that it won't throw an error for
+      // shadowing a variable.
+      //
+      // We use getOwnPropertyNames because iterating over the Object prototype
+      // won't pick up anything.
+      var objectProperties = Object.getOwnPropertyNames(Object.prototype);
+
+      for (var i = 0; i < objectProperties.length; ++i) {
+        this.fields[objectProperties[i]] = undefined;
+      }
     },
 
     subscope: function(classContext, context) {
