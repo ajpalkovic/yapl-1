@@ -133,24 +133,17 @@
     children = children || [];
     childNames = childNames || [];
 
-    var node = $('<' + type + '>');
+    var node = new Node();
     var merged = children.zip(childNames);
 
     merged.each(function(childAndName, i) {
-      if (childAndName[0] instanceof Token) {
-        childAndName[0] = $token(childAndName[0]);
-      }
+      var child = childAndName[0];
+      var name = childAndName[1];
 
-      if (!childAndName[0]) return;
+      if (!child) return;
 
-      childAndName[0] = childAndName[0].clone();
-
-      if (childAndName[1]) {
-        childAndName[0].attr('class', childAndName[1]);
-      }
-
-      childAndName[0].appendTo(node);
-
+      child = child.clone();
+      node.append(child, name);
     }.bind(this));
 
     return node;
