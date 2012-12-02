@@ -29,6 +29,7 @@
         'bind_expression': this.onBindExpression,
         'property': this.onProperty,
         'assignment_expression': this.onAssignmentExpression,
+        'simple_expression': this.onSimpleExpression,
         'operator': this.onOperator,
         'one_line_if_statement': this.onOneLineIfStatement,
         'one_line_unless_statement': this.onOneLineUnlessStatement,
@@ -383,6 +384,61 @@
               'right'
             ])
           );
+      }
+    },
+
+    onSimpleExpression: function(simpleExpression, scope) {
+      var left = simpleExpression.children('.left');
+      var operator = simpleExpression.children('.operator');
+      var right = simpleExpression.children('.right');
+
+      switch (operator.children('token').attr('type')) {
+        case 'COMPARE_TO':
+          return $node('nested_expression', [
+            $node('conditional_expression', [
+              $node('simple_expression', [
+                left,
+                $node('operator', [$token(Token.GREATER_THAN)]),
+                right
+              ], [
+                'left',
+                'operator',
+                'right'
+              ]),
+
+              $node('primitive_literal_expression', [$token(Token.identify('1').token)], ['value']),
+
+              $node('conditional_expression', [
+                $node('simple_expression', [
+                  left,
+                  $node('operator', [$token(Token.LESS_THAN)]),
+                  right
+                ], [
+                  'left',
+                  'operator',
+                  'right'
+                ]),
+
+              $node('unary_expression', [
+                $node('operator', [$token(new Token({type: 'UNARY_MINUS', value: '-'}))]),
+                $token(Token.identify('1').token)
+              ], [
+                'operator',
+                'expression'
+              ]),
+
+              $node('primitive_literal_expression', [$token(Token.identify('0').token)], ['value']),
+              ], [
+                'condition',
+                'truePart',
+                'falsePart'
+              ])
+            ], [
+              'condition',
+              'truePart',
+              'falsePart'
+            ])
+          ]);
       }
     },
 

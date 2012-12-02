@@ -16,7 +16,8 @@
       // We don't allow variable shadowing except for closure params.
       var shadowsVariable = scope.hasSymbol(symbolName) && !declaration.is('closure_parameter');
 
-      if (shadowsVariable) {
+      // If the symbol names begins with two underscores, we can let it shadow.
+      if (shadowsVariable && !symbolName.match(/^__/)) {
         var line = declaration.children('.name').attr('line');
 
         throw new error.ShadowedReference(line, symbolName);

@@ -37,8 +37,6 @@
         nonConditionalLoad = validPropertyAccess = conditionalLoad.children('.member');
       }
 
-      console.log(conditionalLoad.children('.memberPart'));
-
       // Now make a new valid property access with the old valid property access as the
       // property accesses upon which we tack our next property load.
       validPropertyAccess = $node('PropertyAccess',

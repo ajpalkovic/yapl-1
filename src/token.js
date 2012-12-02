@@ -118,7 +118,6 @@
     ['end', 'END'],
     ['unless', 'UNLESS'],
     ['until', 'UNTIL'],
-    ['always', 'ALWAYS'],
     ['class', 'CLASS'],
     ['closure', 'CLOSURE'],
     ['at', 'AT'],

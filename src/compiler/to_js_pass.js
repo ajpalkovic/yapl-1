@@ -154,8 +154,8 @@
     },
 
     onPostfixIncrementExpression: function(postfixIncrementExpression, emitter) {
-      var expression = unaryExpression.children('.expression');
-      var operator = unaryExpression.children('.operator');
+      var expression = postfixIncrementExpression.children('.expression');
+      var operator = postfixIncrementExpression.children('.operator');
 
       emitter.e(expression, operator);
     },
