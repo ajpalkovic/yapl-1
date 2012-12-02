@@ -32,6 +32,8 @@
         'operator': this.onOperator,
         'one_line_if_statement': this.onOneLineIfStatement,
         'one_line_unless_statement': this.onOneLineUnlessStatement,
+        'one_line_while_statement': this.onOneLineWhileStatement,
+        'one_line_until_statement': this.onOneLineUntilStatement,
         'exponentiation_expression': this.onExponentiationExpression
       });
     },
@@ -409,6 +411,26 @@
       return this.onUnlessStatement($node('unless_statement', [
         oneLineUnlessStatement.children('.condition'),
         $statement(oneLineIfStatement.children('.body'))
+      ], [
+        'condition',
+        'body'
+      ]));
+    },
+
+    onOneLineWhileStatement: function(oneLineWhileStatement, scope) {
+      return $node('while_loop', [
+        oneLineWhileStatement.children('.condition'),
+        $statement(oneLineWhileStatement.children('.body'))
+      ], [
+        'condition',
+        'body'
+      ]);
+    },
+
+    onOneLineUntilStatement: function(oneLineUntilStatement, scope) {
+      return this.onUntilLoop($node('until_loop', [
+        oneLineUntilStatement.children('.condition'),
+        $statement(oneLineUntilStatement.children('.body'))
       ], [
         'condition',
         'body'

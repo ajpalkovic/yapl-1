@@ -7,7 +7,8 @@
         'identifier_reference': this.onIdentifier,
         'member_identifier': this.onMemberIdentifier,
         'accessor_variable': this.onAccessorVariable,
-        'property_access': this.onPropertyAccess
+        'property_access': this.onPropertyAccess,
+        'function_declaration, function_expression, method': this.onFunction
       });
     },
 
@@ -92,6 +93,14 @@
           }
         }
       }
+    },
+
+    onFunction: function(functionElement, scope) {
+      scope.set('arguments', $node('variable_declaration', [
+        $token(Token.identify('arguments').token)
+      ], [
+        ['name']
+      ]));
     }
   });
 }(jQuery);

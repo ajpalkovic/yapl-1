@@ -128,6 +128,8 @@
     OneLineIfStatement: node('OneLineIfStatement', ['body', 'condition']),
     UnlessStatement: node('UnlessStatement', ['condition', 'body']),
     OneLineUnlessStatement: node('OneLineUnlessStatement', ['body', 'condition']),
+    OneLineWhileStatement: node('OneLineWhileStatement', ['body', 'condition']),
+    OneLineUntilStatement: node('OneLineUntilStatement', ['body', 'condition']),
     ElsePart: node('ElsePart', ['body']),
     ElseIfList: list('ElseIfList'),
     ElseIf: node('ElseIf', ['condition', 'body']),
