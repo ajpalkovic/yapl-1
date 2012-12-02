@@ -54,7 +54,27 @@
     FunctionDeclaration: node('FunctionDeclaration', ['name', 'parameters', 'body']),
     Closure: node('Closure', ['parameters', 'body']),
     ClosureParameter: node('ClosureParameter', ['name', 'value']),
-    FunctionExpression: node('FunctionExpression', ['name', 'parameters', 'body']),
+
+    FunctionExpression: $.overload(function(parameters, body) {
+      return $node('FunctionExpression', [
+        parameters,
+        body
+      ], [
+        'parameters',
+        'body'
+      ]);
+    }, function(name, parameters, body) {
+      return $node('FunctionExpression', [
+        name,
+        parameters,
+        body
+      ], [
+        'name',
+        'parameters',
+        'body'
+      ]);
+    }),
+
     EmptyList: list('EmptyList'),
     ParameterList: list('ParameterList'),
     AutoSetParam: node('AutoSetParam'),
@@ -128,6 +148,8 @@
     OneLineIfStatement: node('OneLineIfStatement', ['body', 'condition']),
     UnlessStatement: node('UnlessStatement', ['condition', 'body']),
     OneLineUnlessStatement: node('OneLineUnlessStatement', ['body', 'condition']),
+    OneLineWhileStatement: node('OneLineWhileStatement', ['body', 'condition']),
+    OneLineUntilStatement: node('OneLineUntilStatement', ['body', 'condition']),
     ElsePart: node('ElsePart', ['body']),
     ElseIfList: list('ElseIfList'),
     ElseIf: node('ElseIf', ['condition', 'body']),

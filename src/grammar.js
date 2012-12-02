@@ -152,7 +152,13 @@ var Grammar = {
 
   Closure: {
     productions: [
-      ['CLOSURE', 'Parameters', 'FunctionBody', 'END']
+      ['CLOSURE', 'ClosureParameters', 'FunctionBody', 'END']
+    ]
+  },
+
+  ClosureParameters: {
+    productions: [
+      ['Parameters']
     ],
 
     redefinitions: {
@@ -171,8 +177,15 @@ var Grammar = {
 
   FunctionExpression: {
     productions: [
-      ['FUNCTION', 'Parameters', 'FunctionBody', 'END'],
-      ['FUNCTION', '(IDENTIFIER)', 'Parameters', 'FunctionBody', 'END']
+      ['FUNCTION', '(?NoNewline)', '(IDENTIFIER)', 'Parameters', 'FunctionBody', 'END'],
+      ['FUNCTION', 'Parameters', 'FunctionBody', 'END']
+    ]
+  },
+
+  OptFunctionName: {
+    productions: [
+      ['(IDENTIFIER)'],
+      []
     ]
   },
 
@@ -694,6 +707,8 @@ var Grammar = {
     productions: [
       ['OneLineIfStatement'],
       ['OneLineUnlessStatement'],
+      ['OneLineWhileStatement'],
+      ['OneLineUntilStatement'],
       ['FunctionDeclaration'],
       ['IfStatement'],
       ['UnlessStatement'],
@@ -808,6 +823,18 @@ var Grammar = {
     ]
   },
 
+  OneLineWhileStatement: {
+    productions: [
+      ['SimpleStatement', 'WHILE', 'Expression']
+    ]
+  },
+
+  OneLineUntilStatement: {
+    productions: [
+      ['SimpleStatement', 'UNTIL', 'Expression']
+    ]
+  },
+
   BlockBody: {
     productions: [
       ['StatementList']
@@ -835,12 +862,7 @@ var Grammar = {
 
   NoNewline: {
     productions: [
-      ['WHITESPACE', 'NoNewLineLookaheadPart']
-    ],
-  },
-
-  NoNewLineLookaheadPart: {
-    productions: [
+      ['WHITESPACE', 'NoNewline'],
       []
     ],
 

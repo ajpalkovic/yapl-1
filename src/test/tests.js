@@ -1,5 +1,6 @@
 !function($) {
-  test('check vars defined', function() {
+  var compiler = new Compiler();
+  test('test it all', function() {
 
   });
 }(jQuery);

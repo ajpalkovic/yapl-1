@@ -1,11 +1,354 @@
 <html>
   <head>
-    <link rel="stylesheet" href="qunit-1.10.0.css" />
+    <script type="text/javascript" src="../../lib/jquery.min.js"></script>
 
-    <script type="text/javascript" src="qunit-1.10.0.js"></script>
-    <script type="text/javascript" src="tests.js"></script>
+    <script type="text/javascript" src="../util.js"></script>
+    <script type="text/javascript" src="../token.js"></script>
+    <script type="text/javascript" src="../lexer.js"></script>
+    <script type="text/javascript" src="../grammar.js"></script>
+    <script type="text/javascript" src="../parse_tree.js"></script>
+    <script type="text/javascript" src="../parse_actions.js"></script>
+    <script type="text/javascript" src="../parser.js"></script>
+
+    <script type="text/javascript" src="../compiler/errors.js"></script>
+    <script type="text/javascript" src="../compiler/scope.js"></script>
+    <script type="text/javascript" src="../compiler/pass.js"></script>
+    <script type="text/javascript" src="../compiler/string_interpolation_pass.js"></script>
+    <script type="text/javascript" src="../compiler/special_parameters_pass.js"></script>
+    <script type="text/javascript" src="../compiler/expand_closures_pass.js"></script>
+    <script type="text/javascript" src="../compiler/check_vars_defined_pass.js"></script>
+    <script type="text/javascript" src="../compiler/conditional_load_pass.js"></script>
+    <script type="text/javascript" src="../compiler/class_declaration_pass.js"></script>
+    <script type="text/javascript" src="../compiler/call_or_identifier_pass.js"></script>
+    <script type="text/javascript" src="../compiler/syntax_augmentation_pass.js"></script>
+    <script type="text/javascript" src="../compiler/class_body_pass.js"></script>
+    <script type="text/javascript" src="../compiler/to_js_pass.js"></script>
+    <script type="text/javascript" src="../compiler/compiler.js"></script>
+
+    <script type="text/javascript">
+      var compiler = new Compiler();
+
+      jQuery(document).ready(function($) {
+        var yapl = $('#yapl').text();
+        var goodJs = $('#good-js').text();
+        var actualJs = $('#actual-js');
+
+        var resultJs = compiler.compile(yapl);
+        actualJs.text(resultJs);
+
+        var resultClass = resultJs === actualJs ? 'success' : 'failure';
+        actualJs.addClass(resultClass);
+      });
+    </script>
+
+    <style>
+      #container {
+        width: 1000px;
+      }
+
+      #test > tbody > tr > td {
+        width: 30%;
+      }
+
+      pre {
+        overflow: hidden;
+      }
+
+      .success {
+        background: #AAFFAA;
+      }
+
+      .failure {
+        background: #FFAAAA;
+      }
+    </style>
   </head>
   <body>
-    <div id="qunit"></div>
+    <div id="container">
+      <table id="tests">
+        <tr>
+          <td>
+            <pre id="yapl">
+              extern var jQuery, Array, String
+
+              closure($=jQuery)
+                Array.prototype.insert = function(index, value)
+                  this.splice index, 0, value
+                end
+
+                Array.prototype.prepend = function(value)
+                  this.insert 0, value
+                end
+
+                Array.prototype.peek = function
+                  return this[this.length - 1]
+                end
+
+                $.overload = function()
+                  var fns = Array.prototype.slice.call arguments, 0
+                  var table = {}
+
+                  for fn in arguments
+                    table[fn.length] = fn
+                  end
+
+                  return function
+                    var overloadedFn = table[arguments.length]
+                    return overloadedFn.apply this, arguments
+                  end
+                end
+
+                // Found the dictionary here: http://lotsacode.wordpress.com/2010/03/05/singularization-pluralization-in-c/
+                var singularizationRules = [
+                  [/people/, 'person'],
+                  [/oxen/, 'ox'],
+                  [/children/, 'child'],
+                  [/feet/, 'foot'],
+                  [/teeth/, 'tooth'],
+                  [/geese/, 'goose'],
+                  // And now the more standard rules.
+                  [/(.*)ives?/, '$1ife'],
+                  [/(.*)ves?/, '$1f'],
+                  // ie, wolf, wife
+                  [/(.*)men$/, '$1man'],
+                  [/(.+[aeiou])ys$/, '$1y'],
+                  [/(.+[^aeiou])ies$/, '$1y'],
+                  [/(.+)zes$/, '$1'],
+                  [/([m|l])ice$/, '$1ouse'],
+                  [/matrices/, 'matrix'],
+                  [/indices/, 'index'],
+                  [/(.+[^aeiou])ices$/,'$1ice'],
+                  [/(.*)ices/, '$1ex'],
+                  // ie, Matrix, Index
+                  [/(octop|vir)i$/, '$1us'],
+                  [/(.+(s|x|sh|ch))es$/, '$1'],
+                  [/(.+)s/, '$1']
+                ];
+
+                $.singularize = function(word)
+                  for singularizationRule in singularizationRules
+                    var matches = word.match singularizationRule[0]
+                    continue if !matches
+
+                    return word.replace singularizationRule[0], singularizationRule[1]
+                  end
+
+                  return word
+                end
+
+                String.prototype.gsub = function(pattern, replacement)
+                  var result = '', source = this, match
+
+                  if !(pattern.length || pattern.source)
+                    replacement = replacement ''
+                    return replacement + source.split('').join(replacement) + replacement
+                  end
+
+                  while source.length > 0
+                    if match = source.match pattern
+                      result += source.slice 0, match.index
+                      result += replacement match
+                      source = source.slice match.index + match[0].length
+                    else
+                      result += source
+                      source = ''
+                    end
+                  end
+
+                  return result
+                end
+
+                function test
+                  if 1
+                  else if 2
+                  else
+                  end
+
+                  if 1
+                  else
+                    if 2
+                    end
+                  end
+
+                  switch 1
+                    case 1, 2, 3:
+                      return 1
+                    case 4:
+                    default:
+                      return 2
+                  end
+
+                  var b
+                  var x = function
+                    b
+                  end
+
+                  b# 1
+
+                  b..c..d
+
+                  var blah = "
+                    foo: #{b}
+                  "
+
+                  blah = / a b c /
+                  blah = {a, b, c}
+
+                  for key, value in blah at i
+                    value++
+                  end
+
+                  var things
+                  for things
+                    thing
+                  end
+
+                  1 <=> 2
+                end
+              end
+
+              class Foo
+                @var a
+
+                accesses a
+
+                def initialize(@a=1); end
+              end
+            </pre>
+          </td>
+          <td>
+            <pre id="good-js">
+              ;
+              (function ($) {
+                Array.prototype.insert = function (index, value) {
+                  this.splice(index, 0, value);
+                };
+                Array.prototype.prepend = function (value) {
+                  this.insert(0, value);
+                };
+                Array.prototype.peek = function () {
+                  return this[this.length - 1];
+                };
+                $.overload = function () {
+                  var fns = Array.prototype.slice.call(arguments, 0);
+                  var table = {
+
+                  };
+                  var __collection = arguments;
+                  for (var __i = 0; __i < __collection.length; ++__i) {
+                    var fn = __collection[__i];
+                    table[fn.length] = fn;
+                  }
+                  return function () {
+                    var overloadedFn = table[arguments.length];
+                    return overloadedFn.apply(this, arguments);
+                  };
+                };
+                var singularizationRules = [[/people/, 'person'], [/oxen/, 'ox'], [/children/, 'child'], [/feet/, 'foot'], [/teeth/, 'tooth'], [/geese/, 'goose'], [/(.*)ives?/, '$1ife'], [/(.*)ves?/, '$1f'], [/(.*)men$/, '$1man'], [/(.+[aeiou])ys$/, '$1y'], [/(.+[^aeiou])ies$/, '$1y'], [/(.+)zes$/, '$1'], [/([m|l])ice$/, '$1ouse'], [/matrices/, 'matrix'], [/indices/, 'index'], [/(.+[^aeiou])ices$/, '$1ice'], [/(.*)ices/, '$1ex'], [/(octop|vir)i$/, '$1us'], [/(.+(s|x|sh|ch))es$/, '$1'], [/(.+)s/, '$1']];
+                $.singularize = function (word) {
+                  var __collection = singularizationRules;
+                  for (var __i = 0; __i < __collection.length; ++__i) {
+                    var singularizationRule = __collection[__i];
+                    var matches = word.match(singularizationRule[0]);
+                    if (!matches) {
+                      continue;
+                    }
+                    return word.replace(singularizationRule[0], singularizationRule[1]);
+                  }
+                  return word;
+                };
+                String.prototype.gsub = function (pattern, replacement) {
+                  var result = '', source = this, match;
+                  if (!(pattern.length || pattern.source)) {
+                    replacement = replacement('');
+                    return replacement + source.split('').join(replacement) + replacement;
+                  }
+                  while (source.length > 0) {
+                    if (match = source.match(pattern)) {
+                      result += source.slice(0, match.index);
+                      result += replacement(match);
+                      source = source.slice(match.index + match[0].length);
+                    } else {
+                      result += source;
+                      source = '';
+                    }
+                  }
+                  return result;
+                };
+                function test() {
+                  if (1) {
+
+                  } else if (2) {
+
+                  } else {
+
+                  }
+                  if (1) {
+
+                  } else {
+                    if (2) {
+
+                    }
+                  }
+                  switch (1) {
+                    case 1:
+                    case 2:
+                    case 3:
+                      return 1;
+
+                    case 4:default:
+                      return 2;
+
+                  }
+                  var b;
+                  var x = function () {
+                    b;
+                  };
+                  b.bind(this, 1);
+                  b && b.c && b.c.d;
+                  var blah = '' + '\n  foo: ' + b + '\n';
+                  blah = /abc/;
+                  blah = {
+                    a: true,
+                    b: true,
+                    c: true
+                  };
+                  var __collection = blah;
+                  var i = 0;
+                  for (var key in __collection) {
+                    var value = __collection[key];
+                    value++;
+                    ++i
+                  }
+                  var things;
+                  var __collection = things;
+                  for (var __i = 0; __i < __collection.length; ++__i) {
+                    var thing = __collection[__i];
+                    thing;
+                  }
+                  (1 > 2 ? 1 : 1 < 2 ? -1 : 0);
+                }
+              })(jQuery);
+              var Foo = (function () {
+                function Foo(a) {
+                  this.a = a || 1;
+                }
+                Foo.prototype.getA = function () {
+                  return this.a;
+                };
+                Foo.prototype.setA = function (a) {
+                  this.a = a;
+                };
+                return Foo;
+              })();
+            </pre>
+          </td>
+          <td>
+            <pre id="actual-js">
+            </pre>
+          </td>
+        </tr>
+      </table>
+    </div>
   </body>
 </html>
