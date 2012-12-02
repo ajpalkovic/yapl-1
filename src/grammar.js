@@ -171,8 +171,14 @@ var Grammar = {
 
   FunctionExpression: {
     productions: [
-      ['FUNCTION', 'Parameters', 'FunctionBody', 'END'],
-      ['FUNCTION', '(IDENTIFIER)', 'Parameters', 'FunctionBody', 'END']
+      ['FUNCTION', 'OptFunctionName', 'Parameters', 'FunctionBody', 'END']
+    ]
+  },
+
+  OptFunctionName: {
+    productions: [
+      ['(IDENTIFIER)'],
+      []
     ]
   },
 

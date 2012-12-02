@@ -205,7 +205,9 @@
     'CLOSE_BRACE',
     'SINGLE_STRING_LITERAL',
     'DOUBLE_STRING_LITERAL',
-    'SYMBOL'
+    'SYMBOL',
+    'THIS',
+    'SUPER'
   ];
 
   // These are the tokens that can follow a regular expression literal.
