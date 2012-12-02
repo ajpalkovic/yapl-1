@@ -99,7 +99,7 @@
       scope.set('arguments', $node('variable_declaration', [
         $token(Token.identify('arguments').token)
       ], [
-        ['name']
+        'name'
       ]));
     }
   });

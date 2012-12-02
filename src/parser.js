@@ -174,7 +174,7 @@
 
       var tokensMatch = expectedTokenType === lexedToken.type;
 
-      var matched = tokensMatch || lexedToken.optional
+      var matched = tokensMatch || lexedToken.optional;
       var advance = tokensMatch || !lexedToken.optional;
 
       return {

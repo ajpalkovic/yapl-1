@@ -54,7 +54,27 @@
     FunctionDeclaration: node('FunctionDeclaration', ['name', 'parameters', 'body']),
     Closure: node('Closure', ['parameters', 'body']),
     ClosureParameter: node('ClosureParameter', ['name', 'value']),
-    FunctionExpression: node('FunctionExpression', ['name', 'parameters', 'body']),
+
+    FunctionExpression: $.overload(function(parameters, body) {
+      return $node('FunctionExpression', [
+        parameters,
+        body
+      ], [
+        'parameters',
+        'body'
+      ]);
+    }, function(name, parameters, body) {
+      return $node('FunctionExpression', [
+        name,
+        parameters,
+        body
+      ], [
+        'name',
+        'parameters',
+        'body'
+      ]);
+    }),
+
     EmptyList: list('EmptyList'),
     ParameterList: list('ParameterList'),
     AutoSetParam: node('AutoSetParam'),

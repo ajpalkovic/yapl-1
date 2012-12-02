@@ -102,6 +102,7 @@
     ['switch', 'SWITCH'],
     ['case', 'CASE'],
     ['break', 'BREAK'],
+    ['continue', 'CONTINUE'],
     ['default', 'DEFAULT'],
     ['false', 'FALSE'],
     ['true', 'TRUE'],

@@ -79,7 +79,7 @@
           astElement.text(parseTreeText);
           jsOutputElement.text(output);
         } catch (e) {
-          astElement.text(e);
+          astElement.text(parseTreeText);
           jsOutputElement.text('');
           throw e;
         }

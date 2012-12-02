@@ -128,14 +128,17 @@
             }
           }
 
-          // Statics get treated as instance data and regular variables.
-          if (child.is(_this.staticDeclarationSelector)) {
-            scope.set(symbolName, child);
-            scope.classContext.declare(child);
-          } else if (child.is(_this.instanceDeclarationSelector)) {
-            scope.classContext.declare(child);
-          } else {
-            scope.set(symbolName, child);
+          // Anonymous function expressions don't have a name.
+          if (symbolName) {
+            // Statics get treated as instance data and regular variables.
+            if (child.is(_this.staticDeclarationSelector)) {
+              scope.set(symbolName, child);
+              scope.classContext.declare(child);
+            } else if (child.is(_this.instanceDeclarationSelector)) {
+              scope.classContext.declare(child);
+            } else {
+              scope.set(symbolName, child);
+            }
           }
         }
 

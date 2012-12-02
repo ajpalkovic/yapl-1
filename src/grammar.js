@@ -152,7 +152,13 @@ var Grammar = {
 
   Closure: {
     productions: [
-      ['CLOSURE', 'Parameters', 'FunctionBody', 'END']
+      ['CLOSURE', 'ClosureParameters', 'FunctionBody', 'END']
+    ]
+  },
+
+  ClosureParameters: {
+    productions: [
+      ['Parameters']
     ],
 
     redefinitions: {
@@ -171,7 +177,8 @@ var Grammar = {
 
   FunctionExpression: {
     productions: [
-      ['FUNCTION', 'OptFunctionName', 'Parameters', 'FunctionBody', 'END']
+      ['FUNCTION', '(?NoNewline)', '(IDENTIFIER)', 'Parameters', 'FunctionBody', 'END'],
+      ['FUNCTION', 'Parameters', 'FunctionBody', 'END']
     ]
   },
 
@@ -855,12 +862,7 @@ var Grammar = {
 
   NoNewline: {
     productions: [
-      ['WHITESPACE', 'NoNewLineLookaheadPart']
-    ],
-  },
-
-  NoNewLineLookaheadPart: {
-    productions: [
+      ['WHITESPACE', 'NoNewline'],
       []
     ],
 
