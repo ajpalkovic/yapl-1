@@ -76,7 +76,7 @@
       });
     },
 
-    onClassDeclaration: function(classDeclaration, scope) {
+    onClassDeclaration: function(classDeclaration, scope, compiler) {
       var parentClass = classDeclaration.children('.parentClass');
       var classBody = classDeclaration.children('.body');
       var wrapper = $node('function_expression', [
@@ -90,10 +90,11 @@
       var wrapperBody = wrapper.children('.body');
       var classNameToken = classDeclaration.children('.name');
 
-      // Handle nested classes
+      // Handle nested classes, because the pass won't run on the returned
+      // tree.
       var _this = this;
-      classBody.children('class_declaration').remove().each(function(i) {
-        wrapperBody.append(_this.onClassDeclaration($(this), scope));
+      classBody.children('class_declaration').each(function(i) {
+        _this.runWithScopeNode($(this), scope, compiler);
       });
 
       // Make the constructor function, but rename it to the class name
@@ -184,7 +185,23 @@
         'memberPart'
       ]);
 
-      return $variable(classNameToken, call);
+      function makeNamespace(scope) {
+        if (!(scope && scope.classContext)) return;
+
+        var namespace = makeNamespace(scope.parentScope);
+
+        if (!namespace) return scope.classContext.declaration.children('.name');
+
+        return $node('property_access', [
+          namespace,
+          scope.classContext.declaration.children('.name')
+        ], [
+          'member',
+          'memberPart'
+        ]);
+      }
+
+      return $statement($assignment(makeNamespace(scope), call));
     }
   });
 }(jQuery);

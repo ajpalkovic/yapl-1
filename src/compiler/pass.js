@@ -149,9 +149,7 @@
     },
 
     run: function(ast, compiler) {
-      var context = new Context(ast);
-
-      this.runWithScopeNode(ast, new Scope(undefined, context, context), compiler);
+      this.runWithScopeNode(ast, new Scope(), compiler);
     }
   });
 
