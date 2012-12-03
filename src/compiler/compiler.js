@@ -13,6 +13,7 @@
         new pass.ClassBodyTransformer(),
         new pass.SpecialParametersTransformer(),
         new pass.ClassDeclarationTransformer(),
+        new pass.CleanupTransformer()
         // new pass.CallOrIdentifierTransformer()
       ];
 
