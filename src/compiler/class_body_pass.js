@@ -18,8 +18,7 @@
       pass.ScopedTransformer.prototype.initialize.call(this, {
         'class_declaration > .body': this.onClassBody,
         'class_declaration > .body > method > .body member_identifier': this.onMemberIdentifier,
-        'class_declaration > .body > method:not(.constructor) super': this.onSuper,
-        'class_declaration > .body > method.constructor super': this.onSuperInConstructor,
+        'class_declaration > .body > method super': this.onSuper,
         'class_declaration > .body identifier_reference': this.onIdentifier,
         'class_declaration > .body > static_method > method > .body identifier_reference': this.onIdentifier,
         'class_declaration > .body > method > .body identifier_reference': this.onIdentifier,
@@ -66,8 +65,9 @@
 
       var methodName = superCall.closest('method').children('.name');
       var call = superCall.parent().is('call');
+      var isConstructor = superCall.closest('method').is('.constructor');
 
-      var parentPrototype = $node('property_access', [
+      var superObject = isConstructor ? parentClass.clone() : $node('property_access', [
         parentClass,
         PROTOTYPE_TOKEN
       ], [
@@ -75,33 +75,22 @@
         'memberPart'
       ]);
 
-      if (!call) return parentPrototype;
+      if (!call) return superObject;
 
       var arguments = superCall.parent().children('.memberPart');
       arguments.prepend($node('this', [$token(Token.THIS)]));
 
-      return $node('property_access', [
-        parentPrototype,
-        $node('property_access', [
-          methodName,
-          CALL_TOKEN
-        ], [
-          'member',
-          'memberPart'
-        ])
+      var superMethodCall = isConstructor ? CALL_TOKEN : $node('property_access', [
+        methodName,
+        CALL_TOKEN
       ], [
         'member',
         'memberPart'
       ]);
-    },
-
-    onSuperInConstructor: function(superCall, scope) {
-      var parentClass = scope.context.declaration.children('.parentClass');
-      var prototypeReference = this.onSuper(superCall, scope);
 
       return $node('property_access', [
-        parentClass,
-        CALL_TOKEN
+        superObject,
+        superMethodCall
       ], [
         'member',
         'memberPart'

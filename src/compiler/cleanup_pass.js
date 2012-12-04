@@ -2,11 +2,11 @@
   var CleanupTransformer = klass(pass, pass.ScopedTransformer, {
     initialize: function CleanupTransformer() {
       pass.ScopedTransformer.prototype.initialize.call(this, {
-        'extern_var_statement': this.onExternVarStatement
+        'extern_variable_statement': this.onExternVariableStatement
       });
     },
 
-    onExternVarStatement: function(externVarStatement, scope) {
+    onExternVariableStatement: function(externVariableStatement, scope) {
       return null;
     }
   });

@@ -521,6 +521,7 @@ var Grammar = {
       ['This'],
       ['RegexLiteral'],
       ['StringLiteral'],
+      ['NativeCodeStringLiteral'],
       ['Symbol'],
       ['IdentifierReference'],
       ['PrimitiveLiteralExpression'],
