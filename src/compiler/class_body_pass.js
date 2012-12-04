@@ -1,5 +1,7 @@
 !function($) {
   var PROTOTYPE_TOKEN = $token(Token.identify('prototype').token);
+  var CALL_TOKEN = $token(Token.identify('call').token);
+
   var CONSTRUCTOR_NAME = 'initialize';
 
   function makeThisReference(nameToken) {
@@ -16,7 +18,8 @@
       pass.ScopedTransformer.prototype.initialize.call(this, {
         'class_declaration > .body': this.onClassBody,
         'class_declaration > .body > method > .body member_identifier': this.onMemberIdentifier,
-        'class_declaration > .body > method super': this.onSuper,
+        'class_declaration > .body > method:not(.constructor) super': this.onSuper,
+        'class_declaration > .body > method.constructor super': this.onSuperInConstructor,
         'class_declaration > .body identifier_reference': this.onIdentifier,
         'class_declaration > .body > static_method > method > .body identifier_reference': this.onIdentifier,
         'class_declaration > .body > method > .body identifier_reference': this.onIdentifier,
@@ -62,13 +65,47 @@
       }
 
       var methodName = superCall.closest('method').children('.name');
-      var parameters = superCall.parent().is('call') ?
-        superCall.parent().children('.memberPart').children() : $node('parameter_list');
+      var call = superCall.parent().is('call');
 
-      parameters.prepend($token(Token.THIS));
+      var parentPrototype = $node('property_access', [
+        parentClass,
+        PROTOTYPE_TOKEN
+      ], [
+        'member',
+        'memberPart'
+      ]);
 
-      // TODO: figure out how super should work. We don't really have access to the
-      // instance of the super class in JS.
+      if (!call) return parentPrototype;
+
+      var arguments = superCall.parent().children('.memberPart');
+      arguments.prepend($node('this', [$token(Token.THIS)]));
+
+      return $node('property_access', [
+        parentPrototype,
+        $node('property_access', [
+          methodName,
+          CALL_TOKEN
+        ], [
+          'member',
+          'memberPart'
+        ])
+      ], [
+        'member',
+        'memberPart'
+      ]);
+    },
+
+    onSuperInConstructor: function(superCall, scope) {
+      var parentClass = scope.context.declaration.children('.parentClass');
+      var prototypeReference = this.onSuper(superCall, scope);
+
+      return $node('property_access', [
+        parentClass,
+        CALL_TOKEN
+      ], [
+        'member',
+        'memberPart'
+      ]);
     },
 
     onIdentifier: function(identifierReference, scope) {

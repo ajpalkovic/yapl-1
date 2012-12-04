@@ -1,6 +1,7 @@
 !function($) {
   var PROTOTYPE_TOKEN = $token(Token.identify('prototype').token);
   var SURROGATE_CTOR_TOKEN = $token(Token.identify('__surrogate_ctor').token);
+  var CONSTRUCTOR_TOKEN = $token(Token.identify('constructor').token);
 
   function classPrototype(className) {
     return $node('property_access', [
@@ -159,6 +160,21 @@
       classBody.children('method').remove().each(function(i) {
         wrapperBody.append(createFunctionOnPrototype($(this), classNameToken));
       });
+
+      // Set up the constructor property on the prototype.
+      var constructorAssignment = $statement($assignment(
+        $node('property_access', [
+          classPrototype(classNameToken),
+          CONSTRUCTOR_TOKEN
+        ], [
+          'member',
+          'memberPart'
+        ]),
+
+        classNameToken
+      ));
+
+      wrapperBody.append(constructorAssignment);
 
       // We prepend everything else to the top of the wrapper. This is all the code that will be
       // executed when the class is created, not instances of that class.
