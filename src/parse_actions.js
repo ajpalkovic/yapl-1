@@ -133,6 +133,7 @@
     RegexLiteral: node('RegexLiteral'),
     DoubleStringLiteral: node('DoubleStringLiteral'),
     SingleStringLiteral: node('SingleStringLiteral'),
+    NativeCodeStringLiteral: node('NativeCodeStringLiteral'),
     IdentifierReference: node('IdentifierReference'),
     FunctionReference: node('FunctionReference'),
     PrimitiveLiteralExpression: node('PrimitiveLiteralExpression', ['value']),

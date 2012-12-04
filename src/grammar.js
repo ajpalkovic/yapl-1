@@ -80,6 +80,7 @@ var Grammar = {
         ['Super'],
         ['RegexLiteral'],
         ['StringLiteral'],
+        ['NativeCodeStringLiteral'],
         ['Symbol'],
         ['IdentifierReference'],
         ['PrimitiveLiteralExpression'],
@@ -571,6 +572,12 @@ var Grammar = {
   SingleStringLiteral: {
     productions: [
       ['(SINGLE_STRING_LITERAL)']
+    ]
+  },
+
+  NativeCodeStringLiteral: {
+    productions: [
+      ['(NATIVE_CODE_STRING_LITERAL)']
     ]
   },
 
