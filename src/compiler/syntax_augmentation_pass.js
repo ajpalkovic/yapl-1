@@ -196,17 +196,16 @@
     },
 
     onParallelAssignmentExpression: function(parallelAssignmentExpression, scope) {
-
       var leftHandSides = parallelAssignmentExpression.children('.left').children();
       var rightHandSides = parallelAssignmentExpression.children('.right').children();
 
-      var assignments = $();
+      var assignments = $node('parallel_assignment_list');
 
       leftHandSides.each(function(i) {
         var leftHandSide = $(this);
         var rightHandSide = rightHandSides[i] ? $(rightHandSides[i]) : $token(Token.UNDEFINED);
 
-        assignments = assignments.add($assignment(leftHandSide, rightHandSide));
+        assignments.append($assignment(leftHandSide, rightHandSide));
       });
 
       return assignments;

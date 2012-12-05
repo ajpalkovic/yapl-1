@@ -27,6 +27,7 @@
         'object_literal': this.onObjectLiteral,
         'property_list': this.onCommaNewlineList,
         'property': this.onProperty,
+        'parallel_assignment_list': this.onCommaList,
         'assignment_expression': this.onExpression,
         'expression_list': this.onCommaList,
         'conditional_expression': this.onConditionalExpression,
