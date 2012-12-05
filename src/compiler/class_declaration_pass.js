@@ -78,6 +78,7 @@
     },
 
     onClassDeclaration: function(classDeclaration, scope, compiler) {
+
       var parentClass = classDeclaration.children('.parentClass');
       var classBody = classDeclaration.children('.body');
       var wrapper = $node('function_expression', [
@@ -88,15 +89,13 @@
         'body'
       ]);
 
+      // Handle nested classes, because the pass won't run on the returned
+      // tree, and make sure the scope gets updated properly for classes created
+      // inside of methods.
+      this.traverseChildren(classBody, scope, compiler);
+
       var wrapperBody = wrapper.children('.body');
       var classNameToken = classDeclaration.children('.name');
-
-      // Handle nested classes, because the pass won't run on the returned
-      // tree.
-      var _this = this;
-      classBody.children('class_declaration').each(function(i) {
-        _this.runWithScopeNode($(this), scope, compiler);
-      });
 
       // Make the constructor function, but rename it to the class name
       // so the created objects will have the right name.
@@ -217,7 +216,9 @@
         ]);
       }
 
-      return $statement($assignment(makeNamespace(scope), call));
+      // Only statically nested classes get namespaced, not classes created in methods.
+      var namespacedClass = scope.context ? classNameToken : makeNamespace(scope)
+      return $statement($assignment(namespacedClass, call));
     }
   });
 }(jQuery);
