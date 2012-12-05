@@ -162,7 +162,7 @@
     StandardForStructure: node('StandardForStructure'),
     ForInStructure: node('ForInStructure', ['value', 'collection', 'index']),
     MultipleForInStructure: node('MultipleForInStructure', ['key', 'value', 'collection', 'index']),
-    InflectedForStructure: node('InflectedForStructure', ['collection']),
+    InflectedForStructure: node('InflectedForStructure', ['collection', 'index']),
     ContinueStatement: node('KeywordStatement', ['keyword']),
     BreakStatement: node('KeywordStatement', ['keyword']),
     ReturnStatement: node('KeywordStatement', ['keyword', 'expression']),

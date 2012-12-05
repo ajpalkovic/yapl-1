@@ -218,7 +218,7 @@
 
       // Only statically nested classes get namespaced, not classes created in methods.
       var namespacedClass = scope.context ? classNameToken : makeNamespace(scope)
-      return $statement($assignment(namespacedClass, call));
+      return $variable(classNameToken, $assignment(namespacedClass, call));
     }
   });
 }(jQuery);

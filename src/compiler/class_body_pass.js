@@ -124,39 +124,45 @@
     },
 
     onInstanceVarDeclarationStatement: function(instanceVarDeclarationStatement, scope) {
-      var instanceVarDeclaration = instanceVarDeclarationStatement.find('instance_var_declaration');
+      var instanceVarDeclarations = instanceVarDeclarationStatement
+        .children('instance_var_declaration_list')
+        .children('instance_var_declaration');
 
-      var nameToken = instanceVarDeclaration.children('.name');
-      var value = instanceVarDeclaration.children('.value');
-      value = value.size() ? value : $token(Token.UNDEFINED);
+      instanceVarDeclarations.each(function(i) {
+        var instanceVarDeclaration = $(this);
 
-      var name = nameToken.text();
-      var constructorMethod = scope.classContext.methods[CONSTRUCTOR_NAME];
-      var doDeclaration = true;
+        var nameToken = instanceVarDeclaration.children('.name');
+        var value = instanceVarDeclaration.children('.value');
+        value = value.size() ? value : $token(Token.UNDEFINED);
 
-      constructorMethod.children('.parameters').children().each(function(i) {
-        var parameter = $(this);
+        var name = nameToken.text();
+        var constructorMethod = scope.classContext.methods[CONSTRUCTOR_NAME];
+        var doDeclaration = true;
 
-        if (parameter.is('auto_set_param')) {
-          var parameterName = parameter.children('variable_declaration').children('.name').text();
+        constructorMethod.children('.parameters').children().each(function(i) {
+          var parameter = $(this);
 
-          // We don't want to double declare/assign an instance variable if it
-          // will be auto-assigned in the constructor anyway.
-          if (name === parameterName) {
-            doDeclaration = false;
-            return;
+          if (parameter.is('auto_set_param')) {
+            var parameterName = parameter.children('variable_declaration').children('.name').text();
+
+            // We don't want to double declare/assign an instance variable if it
+            // will be auto-assigned in the constructor anyway.
+            if (name === parameterName) {
+              doDeclaration = false;
+              return;
+            }
           }
+        });
+
+        if (doDeclaration) {
+          var memberAssign = $statement($assignment(
+            $node('member_identifier', [nameToken], ['name']),
+            value
+          ));
+
+          constructorMethod.children('.body').prepend(memberAssign);
         }
       });
-
-      if (doDeclaration) {
-        var memberAssign = $statement($assignment(
-          $node('member_identifier', [nameToken], ['name']),
-          value
-        ));
-
-        constructorMethod.children('.body').prepend(memberAssign);
-      }
 
       return null;
     },
