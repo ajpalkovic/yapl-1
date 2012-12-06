@@ -232,6 +232,50 @@ var Grammar = {
     ]
   },
 
+  Proc: {
+    productions: [
+      ['OPEN_BRACE', 'BITWISE_OR', 'ParameterList', 'BITWISE_OR', 'ProcBody', 'CLOSE_BRACE'],
+      ['OPEN_BRACE', 'LOGICAL_OR', 'ProcBody', 'CLOSE_BRACE']
+    ]
+  },
+
+  ProcBody: {
+    productions: [
+      ['ProcBodyLastElementOptTerminator'],
+      []
+    ]
+  },
+
+  ProcBodyLastElementOptTerminator: {
+    productions: [
+      ['SourceElement', 'ProcBody'],
+      ['ProcElement']
+    ]
+  },
+
+  ProcElement: {
+    productions: [
+      ['ProcStatement'],
+      ['ClassDeclaration'],
+      ['Closure']
+    ]
+  },
+
+  ProcStatement: {
+    productions: [
+      ['ProcLastStatement'],
+      ['ComplexStatement'],
+      ['(?EmptyStatement)']
+    ]
+  },
+
+  ProcLastStatement: {
+    productions: [
+      ['SimpleStatement', 'EndSt'],
+      ['SimpleStatement']
+    ]
+  },
+
   MemberIdentifier: {
     productions: [
       ['MEMBER', '(IDENTIFIER)']
@@ -504,6 +548,7 @@ var Grammar = {
   LeftHandSideExpression:  {
     productions: [
       ['FunctionExpression'],
+      ['Proc'],
       ['Closure'],
       ['PrimaryExpression']
     ]

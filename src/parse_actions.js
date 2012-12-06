@@ -75,6 +75,17 @@
       ]);
     }),
 
+    Proc: node('Proc', ['parameters', 'body']),
+
+    ProcBody: $.overload(function() {
+      return $node('proc_body');
+    }, function(body) {
+      return body;
+    }),
+
+    ProcBodyLastElementOptTerminator: list('ProcBody'),
+    ProcLastStatement: node('ProcLastStatement', ['statement']),
+
     EmptyList: list('EmptyList'),
     ParameterList: list('ParameterList'),
     AutoSetParam: node('AutoSetParam'),
@@ -85,6 +96,13 @@
     ObjectLiteral: node('ObjectLiteral'),
     PropertyList: list('PropertyList'),
     Property: node('Property', ['name', 'value']),
+
+    Expression: function(expression) {
+      expression.addClass('expression');
+
+      return expression;
+    },
+
     AssignmentExpression: node('AssignmentExpression', ['left', 'operator', 'right']),
     ParallelAssignmentExpression: node('ParallelAssignmentExpression', ['left', 'operator', 'right']),
     MemberExpressionList: list('MemberExpressionList'),
@@ -135,7 +153,6 @@
     SingleStringLiteral: node('SingleStringLiteral'),
     NativeCodeStringLiteral: node('NativeCodeStringLiteral', ['code']),
     IdentifierReference: node('IdentifierReference'),
-    FunctionReference: node('FunctionReference'),
     PrimitiveLiteralExpression: node('PrimitiveLiteralExpression', ['value']),
     NestedExpression: node('NestedExpression'),
     Operator: node('Operator'),
