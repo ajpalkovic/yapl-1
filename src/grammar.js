@@ -235,7 +235,7 @@ var Grammar = {
   Proc: {
     productions: [
       ['OPEN_BRACE', 'BITWISE_OR', 'ParameterList', 'BITWISE_OR', 'ProcBody', 'CLOSE_BRACE'],
-      ['OPEN_BRACE', 'LOGICAL_OR', 'ProcBody', 'CLOSE_BRACE']
+      ['OPEN_BRACE', 'LOGICAL_OR', 'EmptyList', 'ProcBody', 'CLOSE_BRACE']
     ]
   },
 
@@ -395,7 +395,7 @@ var Grammar = {
 
   Term: {
     productions: [
-      ['ExponentiationExpression', 'AdditiveOperator', 'Term'],
+      ['ExponentiationExpression', '(?NoNewline)', 'AdditiveOperator', 'Term'],
       ['ExponentiationExpression']
     ]
   },

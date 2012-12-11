@@ -44,6 +44,7 @@
         'class_declaration',
         'function_declaration',
         'function_expression',
+        'proc',
         'closure',
         'method',
         'catch'
