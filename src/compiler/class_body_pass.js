@@ -1,5 +1,7 @@
 !function($) {
   var PROTOTYPE_TOKEN = $token(Token.identify('prototype').token);
+  var CALL_TOKEN = $token(Token.identify('call').token);
+
   var CONSTRUCTOR_NAME = 'initialize';
 
   function makeThisReference(nameToken) {
@@ -62,13 +64,37 @@
       }
 
       var methodName = superCall.closest('method').children('.name');
-      var parameters = superCall.parent().is('call') ?
-        superCall.parent().children('.memberPart').children() : $node('parameter_list');
+      var call = superCall.parent().is('call');
+      var isConstructor = superCall.closest('method').is('.constructor');
 
-      parameters.prepend($token(Token.THIS));
+      var superObject = isConstructor ? parentClass.clone() : $node('property_access', [
+        parentClass,
+        PROTOTYPE_TOKEN
+      ], [
+        'member',
+        'memberPart'
+      ]);
 
-      // TODO: figure out how super should work. We don't really have access to the
-      // instance of the super class in JS.
+      if (!call) return superObject;
+
+      var arguments = superCall.parent().children('.memberPart');
+      arguments.prepend($node('this', [$token(Token.THIS)]));
+
+      var superMethodCall = isConstructor ? CALL_TOKEN : $node('property_access', [
+        methodName,
+        CALL_TOKEN
+      ], [
+        'member',
+        'memberPart'
+      ]);
+
+      return $node('property_access', [
+        superObject,
+        superMethodCall
+      ], [
+        'member',
+        'memberPart'
+      ]);
     },
 
     onIdentifier: function(identifierReference, scope) {
@@ -98,39 +124,45 @@
     },
 
     onInstanceVarDeclarationStatement: function(instanceVarDeclarationStatement, scope) {
-      var instanceVarDeclaration = instanceVarDeclarationStatement.find('instance_var_declaration');
+      var instanceVarDeclarations = instanceVarDeclarationStatement
+        .children('instance_var_declaration_list')
+        .children('instance_var_declaration');
 
-      var nameToken = instanceVarDeclaration.children('.name');
-      var value = instanceVarDeclaration.children('.value');
-      value = value.size() ? value : $token(Token.UNDEFINED);
+      instanceVarDeclarations.each(function(i) {
+        var instanceVarDeclaration = $(this);
 
-      var name = nameToken.text();
-      var constructorMethod = scope.classContext.methods[CONSTRUCTOR_NAME];
-      var doDeclaration = true;
+        var nameToken = instanceVarDeclaration.children('.name');
+        var value = instanceVarDeclaration.children('.value');
+        value = value.size() ? value : $token(Token.UNDEFINED);
 
-      constructorMethod.children('.parameters').children().each(function(i) {
-        var parameter = $(this);
+        var name = nameToken.text();
+        var constructorMethod = scope.classContext.methods[CONSTRUCTOR_NAME];
+        var doDeclaration = true;
 
-        if (parameter.is('auto_set_param')) {
-          var parameterName = parameter.children('variable_declaration').children('.name').text();
+        constructorMethod.children('.parameters').children().each(function(i) {
+          var parameter = $(this);
 
-          // We don't want to double declare/assign an instance variable if it
-          // will be auto-assigned in the constructor anyway.
-          if (name === parameterName) {
-            doDeclaration = false;
-            return;
+          if (parameter.is('auto_set_param')) {
+            var parameterName = parameter.children('variable_declaration').children('.name').text();
+
+            // We don't want to double declare/assign an instance variable if it
+            // will be auto-assigned in the constructor anyway.
+            if (name === parameterName) {
+              doDeclaration = false;
+              return;
+            }
           }
+        });
+
+        if (doDeclaration) {
+          var memberAssign = $statement($assignment(
+            $node('member_identifier', [nameToken], ['name']),
+            value
+          ));
+
+          constructorMethod.children('.body').prepend(memberAssign);
         }
       });
-
-      if (doDeclaration) {
-        var memberAssign = $statement($assignment(
-          $node('member_identifier', [nameToken], ['name']),
-          value
-        ));
-
-        constructorMethod.children('.body').prepend(memberAssign);
-      }
 
       return null;
     },

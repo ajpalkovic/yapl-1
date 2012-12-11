@@ -16,11 +16,10 @@
       // We don't allow variable shadowing except for closure params.
       var shadowsVariable = scope.hasSymbol(symbolName) && !declaration.is('closure_parameter');
 
-      // If the symbol names begins with two underscores, we can let it shadow.
-      if (shadowsVariable && !symbolName.match(/^__/)) {
+      if (shadowsVariable) {
         var line = declaration.children('.name').attr('line');
 
-        throw new error.ShadowedReference(line, symbolName);
+        // throw new error.ShadowedReference(line, symbolName);
       }
     },
 
@@ -48,7 +47,7 @@
       if (!scope.hasSymbol(name)) {
         // If the symbol is not in scope, it can be either a static method/var or an instance
         // method/var.
-        if (!scope.classContext.isInContext(name)) {
+        if (!(scope.classContext && scope.classContext.isInContext(name))) {
           throw new error.ReferenceError(token.attr('line'), name);
         }
       }
@@ -58,8 +57,8 @@
       var nameToken = memberIdentifier.children('.name');
       var name = nameToken.text();
 
-      if (!scope.context.isInContext(name)) {
-        var contextName = scope.context.declaration.children('.name').text();
+      if (!(scope.context && scope.context.isInContext(name))) {
+        var contextName = scope.context ? scope.context.declaration.children('.name').text() : 'global';
 
         throw new error.NotInContextError(nameToken.attr('line'), name, contextName);
       }

@@ -80,6 +80,7 @@ var Grammar = {
         ['Super'],
         ['RegexLiteral'],
         ['StringLiteral'],
+        ['NativeCodeStringLiteral'],
         ['Symbol'],
         ['IdentifierReference'],
         ['PrimitiveLiteralExpression'],
@@ -231,6 +232,50 @@ var Grammar = {
     ]
   },
 
+  Proc: {
+    productions: [
+      ['OPEN_BRACE', 'BITWISE_OR', 'ParameterList', 'BITWISE_OR', 'ProcBody', 'CLOSE_BRACE'],
+      ['OPEN_BRACE', 'LOGICAL_OR', 'EmptyList', 'ProcBody', 'CLOSE_BRACE']
+    ]
+  },
+
+  ProcBody: {
+    productions: [
+      ['ProcBodyLastElementOptTerminator'],
+      []
+    ]
+  },
+
+  ProcBodyLastElementOptTerminator: {
+    productions: [
+      ['SourceElement', 'ProcBody'],
+      ['ProcElement']
+    ]
+  },
+
+  ProcElement: {
+    productions: [
+      ['ProcStatement'],
+      ['ClassDeclaration'],
+      ['Closure']
+    ]
+  },
+
+  ProcStatement: {
+    productions: [
+      ['ProcLastStatement'],
+      ['ComplexStatement'],
+      ['(?EmptyStatement)']
+    ]
+  },
+
+  ProcLastStatement: {
+    productions: [
+      ['SimpleStatement', 'EndSt'],
+      ['SimpleStatement']
+    ]
+  },
+
   MemberIdentifier: {
     productions: [
       ['MEMBER', '(IDENTIFIER)']
@@ -350,7 +395,7 @@ var Grammar = {
 
   Term: {
     productions: [
-      ['ExponentiationExpression', 'AdditiveOperator', 'Term'],
+      ['ExponentiationExpression', '(?NoNewline)', 'AdditiveOperator', 'Term'],
       ['ExponentiationExpression']
     ]
   },
@@ -503,6 +548,7 @@ var Grammar = {
   LeftHandSideExpression:  {
     productions: [
       ['FunctionExpression'],
+      ['Proc'],
       ['Closure'],
       ['PrimaryExpression']
     ]
@@ -520,6 +566,7 @@ var Grammar = {
       ['This'],
       ['RegexLiteral'],
       ['StringLiteral'],
+      ['NativeCodeStringLiteral'],
       ['Symbol'],
       ['IdentifierReference'],
       ['PrimitiveLiteralExpression'],
@@ -571,6 +618,12 @@ var Grammar = {
   SingleStringLiteral: {
     productions: [
       ['(SINGLE_STRING_LITERAL)']
+    ]
+  },
+
+  NativeCodeStringLiteral: {
+    productions: [
+      ['(NATIVE_CODE_STRING_LITERAL)']
     ]
   },
 

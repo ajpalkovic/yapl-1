@@ -75,6 +75,17 @@
       ]);
     }),
 
+    Proc: node('Proc', ['parameters', 'body']),
+
+    ProcBody: $.overload(function() {
+      return $node('proc_body');
+    }, function(body) {
+      return body;
+    }),
+
+    ProcBodyLastElementOptTerminator: list('ProcBody'),
+    ProcLastStatement: node('ProcLastStatement', ['statement']),
+
     EmptyList: list('EmptyList'),
     ParameterList: list('ParameterList'),
     AutoSetParam: node('AutoSetParam'),
@@ -85,6 +96,13 @@
     ObjectLiteral: node('ObjectLiteral'),
     PropertyList: list('PropertyList'),
     Property: node('Property', ['name', 'value']),
+
+    Expression: function(expression) {
+      expression.addClass('expression');
+
+      return expression;
+    },
+
     AssignmentExpression: node('AssignmentExpression', ['left', 'operator', 'right']),
     ParallelAssignmentExpression: node('ParallelAssignmentExpression', ['left', 'operator', 'right']),
     MemberExpressionList: list('MemberExpressionList'),
@@ -133,8 +151,8 @@
     RegexLiteral: node('RegexLiteral'),
     DoubleStringLiteral: node('DoubleStringLiteral'),
     SingleStringLiteral: node('SingleStringLiteral'),
+    NativeCodeStringLiteral: node('NativeCodeStringLiteral', ['code']),
     IdentifierReference: node('IdentifierReference'),
-    FunctionReference: node('FunctionReference'),
     PrimitiveLiteralExpression: node('PrimitiveLiteralExpression', ['value']),
     NestedExpression: node('NestedExpression'),
     Operator: node('Operator'),
@@ -161,7 +179,7 @@
     StandardForStructure: node('StandardForStructure'),
     ForInStructure: node('ForInStructure', ['value', 'collection', 'index']),
     MultipleForInStructure: node('MultipleForInStructure', ['key', 'value', 'collection', 'index']),
-    InflectedForStructure: node('InflectedForStructure', ['collection']),
+    InflectedForStructure: node('InflectedForStructure', ['collection', 'index']),
     ContinueStatement: node('KeywordStatement', ['keyword']),
     BreakStatement: node('KeywordStatement', ['keyword']),
     ReturnStatement: node('KeywordStatement', ['keyword', 'expression']),

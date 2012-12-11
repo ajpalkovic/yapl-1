@@ -27,6 +27,7 @@
         'object_literal': this.onObjectLiteral,
         'property_list': this.onCommaNewlineList,
         'property': this.onProperty,
+        'parallel_assignment_list': this.onCommaList,
         'assignment_expression': this.onExpression,
         'expression_list': this.onCommaList,
         'conditional_expression': this.onConditionalExpression,
@@ -48,6 +49,7 @@
         'regex_literal': this.onRegexLiteral,
         'single_string_literal': this.onStringLiteral,
         'double_string_literal': this.onStringLiteral,
+        'native_code_string_literal': this.onNativeCodeStringLiteral,
         'identifier_reference': this.onIdentifierReference,
         'primitive_literal_expression': this.onPrimitiveLiteralExpression,
         'nested_expression': this.onNestedExpression,
@@ -197,6 +199,15 @@
 
     onStringLiteral: function(stringLiteral, emitter) {
       emitter.e(stringLiteral.children());
+    },
+
+    onNativeCodeStringLiteral: function(nativeCodeStringLiteral, emitter) {
+      var code = nativeCodeStringLiteral.children('.code').text();
+
+      if (code.length) {
+        // Removes the ticks
+        emitter.e(code.substring(1, code.length - 1));
+      }
     },
 
     onIdentifierReference: function(identifierReference, emitter) {

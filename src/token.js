@@ -65,10 +65,11 @@
   }
 
   var regexes = {
-    NUMERIC_LITERAL: '(?:((?:0[0-7]+))|((?:0x[a-fA-F0-9]+))|((?:(?:\\d+(?:\\.\\d*)?)|(?:\\.\\d+))(?:[eE]\\d+)?))',
+    NUMERIC_LITERAL: '(?:((?:0[0-7]+))|((?:0x[a-fA-F0-9]+))|((?:(?:\\d+(?:\\.\\d+)?)|(?:\\.\\d+))(?:[eE]\\d+)?))',
     DOT: '(\\.)',
     IDENTIFIER: '((?:[a-zA-Z_\\$][_a-zA-Z0-9\\$]*))',
     STRING_LITERAL: '(\'|")',
+    NATIVE_CODE_STRING_LITERAL: '`',
     FORWARD_SLASH: '\\/',
     WHITESPACE: WHITESPACE_TYPE,
     PLUS_OR_MINUS: '(\\+|-)',
@@ -373,6 +374,36 @@
           }),
 
           position: endQuotePos + 1
+        };
+      }
+    ],
+
+    // NATIVE_CODE_STRING_LITERAL
+    [
+      regexes.NATIVE_CODE_STRING_LITERAL,
+      function(matches, string, tokens) {
+        var endTickPos = 0;
+
+        for (var i = 1; i < string.length; ++i) {
+          if (string[i] === '`') {
+            endTickPos = i;
+            break;
+          } else if (string[i] === '\\') {
+            // Skip whatever the next character is, because it is escaped, and we don't
+            // care...
+            i++;
+          }
+        }
+
+        if (!endTickPos) return undefined;
+
+        return {
+          token: new Token({
+            type: 'NATIVE_CODE_STRING_LITERAL',
+            value: string.substring(0, endTickPos + 1)
+          }),
+
+          position: endTickPos + 1
         };
       }
     ],

@@ -1,6 +1,7 @@
 !function($) {
   var PROTOTYPE_TOKEN = $token(Token.identify('prototype').token);
   var SURROGATE_CTOR_TOKEN = $token(Token.identify('__surrogate_ctor').token);
+  var CONSTRUCTOR_TOKEN = $token(Token.identify('constructor').token);
 
   function classPrototype(className) {
     return $node('property_access', [
@@ -76,7 +77,8 @@
       });
     },
 
-    onClassDeclaration: function(classDeclaration, scope) {
+    onClassDeclaration: function(classDeclaration, scope, compiler) {
+
       var parentClass = classDeclaration.children('.parentClass');
       var classBody = classDeclaration.children('.body');
       var wrapper = $node('function_expression', [
@@ -87,14 +89,13 @@
         'body'
       ]);
 
+      // Handle nested classes, because the pass won't run on the returned
+      // tree, and make sure the scope gets updated properly for classes created
+      // inside of methods.
+      this.traverseChildren(classBody, scope, compiler);
+
       var wrapperBody = wrapper.children('.body');
       var classNameToken = classDeclaration.children('.name');
-
-      // Handle nested classes
-      var _this = this;
-      classBody.children('class_declaration').remove().each(function(i) {
-        wrapperBody.append(_this.onClassDeclaration($(this), scope));
-      });
 
       // Make the constructor function, but rename it to the class name
       // so the created objects will have the right name.
@@ -159,6 +160,21 @@
         wrapperBody.append(createFunctionOnPrototype($(this), classNameToken));
       });
 
+      // Set up the constructor property on the prototype.
+      var constructorAssignment = $statement($assignment(
+        $node('property_access', [
+          classPrototype(classNameToken),
+          CONSTRUCTOR_TOKEN
+        ], [
+          'member',
+          'memberPart'
+        ]),
+
+        classNameToken
+      ));
+
+      wrapperBody.append(constructorAssignment);
+
       // We prepend everything else to the top of the wrapper. This is all the code that will be
       // executed when the class is created, not instances of that class.
       var classBodyCode = classBody.children();
@@ -184,7 +200,25 @@
         'memberPart'
       ]);
 
-      return $variable(classNameToken, call);
+      function makeNamespace(scope) {
+        if (!(scope && scope.classContext)) return;
+
+        var namespace = makeNamespace(scope.parentScope);
+
+        if (!namespace) return scope.classContext.declaration.children('.name');
+
+        return $node('property_access', [
+          namespace,
+          scope.classContext.declaration.children('.name')
+        ], [
+          'member',
+          'memberPart'
+        ]);
+      }
+
+      // Only statically nested classes get namespaced, not classes created in methods.
+      var namespacedClass = scope.context ? classNameToken : makeNamespace(scope)
+      return $variable(classNameToken, $assignment(namespacedClass, call));
     }
   });
 }(jQuery);

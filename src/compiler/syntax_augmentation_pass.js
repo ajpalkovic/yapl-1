@@ -12,6 +12,13 @@
     variableDeclaration.append(valueNode);
   }
 
+  var newVariableName = function() {
+    var count = 0;
+    return function(name) {
+      return name + count++
+    };
+  }();
+
   var SyntaxAugmentationTransformer = klass(pass, pass.ScopedTransformer, {
     initialize: function SyntaxAugmentationTransformer() {
       pass.ScopedTransformer.prototype.initialize.call(this, {
@@ -35,7 +42,8 @@
         'one_line_unless_statement': this.onOneLineUnlessStatement,
         'one_line_while_statement': this.onOneLineWhileStatement,
         'one_line_until_statement': this.onOneLineUntilStatement,
-        'exponentiation_expression': this.onExponentiationExpression
+        'exponentiation_expression': this.onExponentiationExpression,
+        'primitive_literal_expression': this.onPrimitiveLiteralExpression
       });
     },
 
@@ -46,7 +54,7 @@
       var index = forInStructure.children('.index').remove();
       var body = forLoop.children('.body');
 
-      var collectionToken = $token(Token.identify('__collection').token);
+      var collectionToken = $token(Token.identify(newVariableName('__collection')).token);
 
       // Then we assign whatever the collection was to a variable so we can access it.
       $variable(
@@ -55,7 +63,7 @@
       ).insertBefore(forLoop);
 
       if (!index.size()) {
-        var tokenNode = $token(Token.identify('__i').token);
+        var tokenNode = $token(Token.identify(newVariableName('__i')).token);
         index = $node('variable_declaration', [tokenNode], ['name']);
         index.addClass('index');
       }
@@ -116,7 +124,7 @@
       var index = multipleForInStructure.children('.index').remove();
       var body = forLoop.children('.body');
 
-      var collectionToken = $token(Token.identify('__collection').token);
+      var collectionToken = $token(Token.identify(newVariableName('__collection')).token);
 
       // Then we assign whatever the collection was to a variable so we can access it.
       $variable(
@@ -125,7 +133,7 @@
       ).insertBefore(forLoop);
 
       if (!index.size()) {
-        var tokenNode = $token(Token.identify('__i').token);
+        var tokenNode = $token(Token.identify(newVariableName('__i')).token);
         index = $node('variable_declaration', [tokenNode], ['name']);
         index.addClass('index');
       }
@@ -196,17 +204,16 @@
     },
 
     onParallelAssignmentExpression: function(parallelAssignmentExpression, scope) {
-
       var leftHandSides = parallelAssignmentExpression.children('.left').children();
       var rightHandSides = parallelAssignmentExpression.children('.right').children();
 
-      var assignments = $();
+      var assignments = $node('parallel_assignment_list');
 
       leftHandSides.each(function(i) {
         var leftHandSide = $(this);
         var rightHandSide = rightHandSides[i] ? $(rightHandSides[i]) : $token(Token.UNDEFINED);
 
-        assignments = assignments.add($assignment(leftHandSide, rightHandSide));
+        assignments.append($assignment(leftHandSide, rightHandSide));
       });
 
       return assignments;
@@ -514,6 +521,12 @@
         'member',
         'memberPart'
       ]);
+    },
+
+    onPrimitiveLiteralExpression: function(primitiveLiteralExpression, scope) {
+      if (primitiveLiteralExpression.parent().is('property_access')) {
+        return $node('nested_expression', [primitiveLiteralExpression]);
+      }
     }
   });
 }(jQuery);
