@@ -1,12 +1,14 @@
-!function($) {
+!function() {
   /**
    * Creates a new parse action for a list node.
    */
   function list(type) {
-    return $.overload(function() {
-      return $node(type);
+    return overload(function() {
+      return new NodeList(type);
     }, function(firstElement) {
-      var node = $node(type, [firstElement]);
+      var node = new NodeList(type);
+      node.prepend(firstElement);
+
       return node;
     }, function(element, nodeList) {
       nodeList.prepend(element);
@@ -23,10 +25,26 @@
    */
   function node(type, childNames) {
     return function() {
-      var args = Array.prototype.slice.call(arguments, 0);
-      var node = $node(type, args, childNames);
+      var args = $A(arguments);
+      if (!childNames) {
+        var nameCount = {};
+        childNames = [];
 
-      return node;
+        for (var i = 0; i < args.length; ++i) {
+          var node = args[i];
+          var camelCaseName = node.type.gsub(/(_)(.)/, function(match) {
+            return match[2].toUpperCase();
+          });
+
+          var count = nameCount[camelCaseName]++;
+          camelCaseName += count ? count : '';
+
+          childNames.push(camelCaseName);
+        }
+      }
+
+      var children = childNames.mapTo(args);
+      return new Node(type, children);
     };
   }
 
@@ -55,30 +73,23 @@
     Closure: node('Closure', ['parameters', 'body']),
     ClosureParameter: node('ClosureParameter', ['name', 'value']),
 
-    FunctionExpression: $.overload(function(parameters, body) {
-      return $node('FunctionExpression', [
-        parameters,
-        body
-      ], [
-        'parameters',
-        'body'
-      ]);
+    FunctionExpression: overload(function(parameters, body) {
+      return new Node('function_expression', {
+        parameters: parameters,
+        body: body
+      });
     }, function(name, parameters, body) {
-      return $node('FunctionExpression', [
-        name,
-        parameters,
-        body
-      ], [
-        'name',
-        'parameters',
-        'body'
-      ]);
+      return new Node('function_expression', {
+        name: name,
+        parameters: parameters,
+        body: body
+      });
     }),
 
     Proc: node('Proc', ['parameters', 'body']),
 
-    ProcBody: $.overload(function() {
-      return $node('proc_body');
+    ProcBody: overload(function() {
+      return new Node('proc_body');
     }, function(body) {
       return body;
     }),
@@ -98,7 +109,7 @@
     Property: node('Property', ['name', 'value']),
 
     Expression: function(expression) {
-      expression.addClass('expression');
+      expression.tagAs('expression');
 
       return expression;
     },
@@ -117,22 +128,23 @@
     PrefixIncrementExpression: node('PrefixIncrementExpression', ['operator', 'expression']),
     NewExpression: node('NewExpression'),
 
-    MemberExpression: $.overload(function(primaryExpression) {
+    MemberExpression: overload(function(primaryExpression) {
       return primaryExpression
     }, function(primaryExpression, memberChain) {
       memberChain.prepend(primaryExpression);
 
       // Make the hierarchy from the flattened chain.
-      var tree = memberChain.children().first().remove();
+      var tree = memberChain.children()[0].remove();
 
       while (memberChain.children().length) {
-        var memberPart = memberChain.children().first().remove();
+        var memberPart = memberChain.children()[0].remove();
 
-        var type = memberPart.type();
+        var type = memberPart.type;
 
-        tree = $node(type,
-          [tree, memberPart.children().first()],
-          ['member', 'memberPart']);
+        tree = new Node(type, {
+          member: tree,
+          memberPart: memberPart
+        });
       }
 
       return tree;
@@ -199,4 +211,4 @@
   };
 
   window.ParseActions = ParseActions;
-}(jQuery);
+}();

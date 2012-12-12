@@ -1,4 +1,4 @@
-(function($) {
+(function() {
   Array.prototype.insert = function(index, value) {
     this.splice(index, 0, value);
   };
@@ -11,11 +11,85 @@
     return this[this.length - 1];
   };
 
+  Array.prototype.mapTo = function(other) {
+    var map = {};
+
+    for (var i = 0; i < this.length; ++i) {
+      map[this[i].toString()] = other[i];
+    }
+
+    return map;
+  };
+
+  Object.extend = function() {
+    var options, name, src, copy, copyIsArray, clone,
+      target = arguments[0] || {},
+      i = 1,
+      length = arguments.length,
+      deep = false;
+
+    // Handle a deep copy situation
+    if ( typeof target === "boolean" ) {
+      deep = target;
+      target = arguments[1] || {};
+      // skip the boolean and the target
+      i = 2;
+    }
+
+    // Handle case when target is a string or something (possible in deep copy)
+    if ( typeof target !== "object" && !jQuery.isFunction(target) ) {
+      target = {};
+    }
+
+    // extend jQuery itself if only one argument is passed
+    if ( length === i ) {
+      target = this;
+      --i;
+    }
+
+    for ( ; i < length; i++ ) {
+      // Only deal with non-null/undefined values
+      if ( (options = arguments[ i ]) != null ) {
+        // Extend the base object
+        for ( name in options ) {
+          src = target[ name ];
+          copy = options[ name ];
+
+          // Prevent never-ending loop
+          if ( target === copy ) {
+            continue;
+          }
+
+          // Recurse if we're merging plain objects or arrays
+          if ( deep && copy && ( jQuery.isPlainObject(copy) || (copyIsArray = jQuery.isArray(copy)) ) ) {
+            if ( copyIsArray ) {
+              copyIsArray = false;
+              clone = src && jQuery.isArray(src) ? src : [];
+
+            } else {
+              clone = src && jQuery.isPlainObject(src) ? src : {};
+            }
+
+            // Never move original objects, clone them
+            target[ name ] = jQuery.extend( deep, clone, copy );
+
+          // Don't bring in undefined values
+          } else if ( copy !== undefined ) {
+            target[ name ] = copy;
+          }
+        }
+      }
+    }
+
+    // Return the modified object
+    return target;
+  };
+
   Function.create = function(name, arguments, body) {
     return eval('(function ' + name + '(' + arguments + ') {' + body + '})');
   };
 
-  $.overload = function() {
+  window.overload = function() {
     var fns = Array.prototype.slice.call(arguments, 0);
     var table = {};
 
@@ -57,7 +131,7 @@
     [/(.+)s/, '$1']
   ];
 
-  $.singularize = function(word) {
+  window.singularize = function(word) {
     for (var i = 0; i < singularizationRules.length; ++i) {
       var singularizationRule = singularizationRules[i];
 
@@ -113,7 +187,7 @@
   Array.prototype.last = Array.prototype.peek;
   Array.prototype.each = Array.prototype.forEach;
 
-  function $A(iterable) {
+  window.$A = function(iterable) {
     if (!iterable) return [];
     if ('toArray' in Object(iterable)) return iterable.toArray();
     var length = iterable.length || 0, results = new Array(length);
@@ -121,89 +195,10 @@
     return results;
   }
 
-  $.toTagName = function(type) {
+  window.toTagName = function(type) {
     return type[0].toLowerCase() + type.substring(1).gsub(/([A-Z])/, function(match) {
       return '_' + match[0].toLowerCase();
     });
-  };
-
-  $node = function(type, children, childNames) {
-    type = $.toTagName(type);
-
-    children = children || [];
-    childNames = childNames || [];
-
-    var node = new Node();
-    var merged = children.zip(childNames);
-
-    merged.each(function(childAndName, i) {
-      var child = childAndName[0];
-      var name = childAndName[1];
-
-      if (!child) return;
-
-      child = child.clone();
-      node.append(child, name);
-    }.bind(this));
-
-    return node;
-  };
-
-  $statement = function(node) {
-    return $node('terminated_statement', [node], ['statement']);
-  };
-
-  $variable = function(name, value) {
-    var declaration = value ? $node('variable_declaration', [
-      name,
-      value
-    ], [
-      'name',
-      'value'
-    ]) : $node('variable_declaration', [
-      name,
-      value
-    ], [
-      'name',
-      'value'
-    ]);
-
-    return $statement(
-      $node('variable_statement', [
-        $node('variable_declaration_list', [
-          declaration
-        ])
-      ])
-    );
-  };
-
-  $assignment = function(left, right) {
-    return $node('assignment_expression', [
-      left,
-      $node('operator', [Token.ASSIGN]),
-      right
-    ], [
-      'left',
-      'operator',
-      'right'
-    ]);
-  };
-
-  $token = function(token) {
-    var node = $node('token');
-    node.attr('type', token.type);
-    node.attr('line', token.line);
-    node.text(token.value);
-
-    return node;
-  };
-
-  $.fn.each = function( callback, args ) {
-    return jQuery.each( this, callback, args );
-  };
-
-  $.fn.type = function() {
-    return this.prop('tagName').toLowerCase();
   };
 
   window.$S = function(items, delimeter) {
@@ -217,7 +212,7 @@
     return object;
   }
 
-  window.klass = $.overload(function(methods) {
+  window.klass = overload(function(methods) {
       return klass({}, methods);
     },
 
@@ -247,4 +242,4 @@
 
       return klass;
     });
-})(jQuery);
+})();

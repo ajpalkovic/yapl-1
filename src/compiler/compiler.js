@@ -1,26 +1,26 @@
-!function($) {
+!function() {
   var Compiler = klass({
     initialize: function Compiler() {
       this.emitter = new Emitter();
-      this.passes = [
-        new pass.StringInterpolationPass(),
-        // Might need to declare some variables that are implicitly defined
-        // before the compiler checks for them.
-        new pass.SyntaxAugmentationTransformer(),
-        new pass.CheckVarsDefinedPass(),
-        new pass.ExpandClosuresTransformer(),
-        new pass.ConditionalLoadTransformer(),
-        new pass.ClassBodyTransformer(),
-        new pass.SpecialParametersTransformer(),
-        new pass.ClassDeclarationTransformer(),
-        new pass.ProcTransformer(),
-        new pass.CleanupTransformer()
-        // new pass.CallOrIdentifierTransformer()
-      ];
+      // this.passes = [
+      //   new pass.StringInterpolationPass(),
+      //   // Might need to declare some variables that are implicitly defined
+      //   // before the compiler checks for them.
+      //   new pass.SyntaxAugmentationTransformer(),
+      //   new pass.CheckVarsDefinedPass(),
+      //   new pass.ExpandClosuresTransformer(),
+      //   new pass.ConditionalLoadTransformer(),
+      //   new pass.ClassBodyTransformer(),
+      //   new pass.SpecialParametersTransformer(),
+      //   new pass.ClassDeclarationTransformer(),
+      //   new pass.ProcTransformer(),
+      //   new pass.CleanupTransformer()
+      //   // new pass.CallOrIdentifierTransformer()
+      // ];
 
-      this.outputPasses = {
-        'js': new pass.ToJsEmitter()
-      };
+      // this.outputPasses = {
+      //   'js': new pass.ToJsEmitter()
+      // };
 
       this.parser = window.parser = new Parser();
     },
@@ -55,36 +55,37 @@
       }
 
       return output;
-    },
-
-    stringify: function(ast) {
-      var emitter = new Emitter();
-
-      function stringifyChildren(parent) {
-        var length = parent.children().length;
-
-        parent.children().each(function(i) {
-          stringify($(this));
-
-          if (i < length - 1) emitter.nl();
-        });
-      }
-
-      function stringify(ast) {
-        if (ast.type() === 'token') {
-          emitter.e('(', ast.type(), ' "' + ast.text() + '")');
-          return;
-        }
-
-        emitter.e('(', ast.type()).blk();
-        stringifyChildren(ast);
-        emitter.end().e(')');
-      }
-
-      stringify(ast);
-      return emitter.flush();
     }
   });
+
+  Compiler.stringify = function(ast) {
+    var emitter = new Emitter();
+
+    function stringifyChildren(parent) {
+      var length = parent.children().length;
+
+      parent.children().each(function(child, i) {
+        if (!child) return;
+
+        stringify(child);
+        if (i < length - 1) emitter.nl();
+      });
+    }
+
+    function stringify(ast) {
+      if (ast.is('token')) {
+        emitter.e('(', ast.token.type, ' "' + ast.token.value + '")');
+        return;
+      }
+
+      emitter.e('(', ast.type).blk();
+      stringifyChildren(ast);
+      emitter.end().e(')');
+    }
+
+    stringify(ast);
+    return emitter.flush();
+  };
 
   Compiler.target = {
     js: 'js'
@@ -200,4 +201,4 @@
       return this;
     }
   });
-}(jQuery);
+}();

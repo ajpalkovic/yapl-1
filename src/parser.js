@@ -1,4 +1,4 @@
-!function($) {
+!function() {
   var Parser = klass({
     /**
      * Yapl's parser implementation.
@@ -74,7 +74,7 @@
 
       // Extends the productions with the redefinitiosn if there are any.
       if (rule.redefinitions) {
-        redefinitions = $.extend({}, redefinitions, rule.redefinitions);
+        redefinitions = Object.extend({}, redefinitions, rule.redefinitions);
       }
 
       for (var i = 0, numProds = productions.length; i < numProds; ++i) {
@@ -102,7 +102,7 @@
           } else {
             var matchResult = this._match(currentSymbol);
             if (matchResult) {
-              if (matchResult.value) parseResults.push(matchResult.value);
+              if (matchResult.value) parseResults.push(new TokenNode(matchResult.value));
 
               // We might not want to advance to the next element of the production
               // depending on how the terminal matched.
@@ -225,4 +225,4 @@
       return tree;
     }
   });
-}(jQuery);
+}();

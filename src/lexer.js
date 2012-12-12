@@ -1,4 +1,4 @@
-!function($) {
+!function() {
   var SyntaxError = klass({
     initialize: function SyntaxError(line, col, token) {
       this.line = line;
@@ -122,4 +122,4 @@
       return tokens;
     }
   });
-}(jQuery);
+}();

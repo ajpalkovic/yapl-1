@@ -1,4 +1,4 @@
-!function($) {
+!function() {
   WHITESPACE_TYPES = {
     SPACES_ONLY: '((?:[^\\S\\n\\t]+))', // Does not match newlines
     TABS_ONLY: '((?:[\\t]+))', // Does not match newlines
@@ -798,4 +798,4 @@
     'OPEN_BRACKET_NO_EXPR': '[',
     'WHITESPACE': ' '
   };
-}(jQuery);
+}();
