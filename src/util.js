@@ -21,6 +21,20 @@
     return map;
   };
 
+  Object.defineProperty(Object.prototype, 'each', {
+    value: function(callback) {
+      for (var name in this) {
+        if (callback.call(this[name], name, this[name]) === false) {
+          break;
+        }
+      }
+
+      return this;
+    },
+
+    writable: true
+  });
+
   Object.extend = function() {
     var options, name, src, copy, copyIsArray, clone,
       target = arguments[0] || {},
@@ -200,17 +214,6 @@
       return '_' + match[0].toLowerCase();
     });
   };
-
-  window.$S = function(items, delimeter) {
-    items = (typeof items === 'string') ? items.split(delimeter || '') : items;
-    var object = {};
-
-    $.each(items, function(index, value) {
-      object[value] = true;
-    });
-
-    return object;
-  }
 
   window.klass = overload(function(methods) {
       return klass({}, methods);

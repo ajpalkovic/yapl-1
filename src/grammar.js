@@ -1140,3 +1140,37 @@ var Grammar = {
   }
 };
 
+// The parentheses for capturing/ignoring results are just for convenience. To
+// boost performance, we don't want the parser having to extract the actual name
+// of the symbol from the parentheses, so we do that here, and populate a capture
+// object on the rule that lists the captures.
+// for (var ruleName in Grammar) {
+//   var ruleObject = Grammar[ruleName];
+//   var productions = ruleObject.productions;
+
+//   var captures = ruleObject.captures = [];
+
+//   for (var i = 0; i < productions.length; ++i) {
+//     var production = productions[i];
+//     var currentCaptures = [];
+
+//     captures.push(currentCaptures);
+
+//     for (var j = 0; j < production.length; ++j) {
+//       var symbolName = production[j];
+
+//       if (symbolName[0] === '(' && symbolName[symbolName.length - 1] === ')') {
+//         var explicitNonCapture = symbolName[1] === '?';
+
+//         currentCaptures[j] = !explicitNonCapture;
+//         production[j] = symbolName.substring(explicitNonCapture ? 2 : 1, symbolName.length - 1);
+//       } else {
+//         // The values of non-terminals are always captured, unless explicitly wrapped with a
+//         // non-capture. Terminal values must be wrapped in capturing parentheses to be captured
+//         // though.
+//         var isNonTerminal = !!Grammar[symbolName];
+//         currentCaptures[j] = isNonTerminal;
+//       }
+//     }
+//   }
+// }

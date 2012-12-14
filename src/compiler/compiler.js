@@ -2,25 +2,26 @@
   var Compiler = klass({
     initialize: function Compiler() {
       this.emitter = new Emitter();
-      // this.passes = [
-      //   new pass.StringInterpolationPass(),
-      //   // Might need to declare some variables that are implicitly defined
-      //   // before the compiler checks for them.
-      //   new pass.SyntaxAugmentationTransformer(),
-      //   new pass.CheckVarsDefinedPass(),
-      //   new pass.ExpandClosuresTransformer(),
-      //   new pass.ConditionalLoadTransformer(),
-      //   new pass.ClassBodyTransformer(),
-      //   new pass.SpecialParametersTransformer(),
-      //   new pass.ClassDeclarationTransformer(),
-      //   new pass.ProcTransformer(),
-      //   new pass.CleanupTransformer()
-      //   // new pass.CallOrIdentifierTransformer()
-      // ];
+      this.passesForTarget = {
+        'js': {
+          passes: [
+            // new pass.StringInterpolationPass(),
+            // Might need to declare some variables that are implicitly defined
+            // before the compiler checks for them.
+            // new pass.SyntaxAugmentationTransformer(),
+            new pass.CheckVarsDefinedPass(),
+            // new pass.ExpandClosuresTransformer(),
+            // new pass.ConditionalLoadTransformer(),
+            // new pass.ClassBodyTransformer(),
+            // new pass.SpecialParametersTransformer(),
+            // new pass.ClassDeclarationTransformer(),
+            // new pass.ProcTransformer(),
+            // new pass.CleanupTransformer()
+          ],
 
-      // this.outputPasses = {
-      //   'js': new pass.ToJsEmitter()
-      // };
+          // emitter: new pass.ToJsEmitter()
+        }
+      };
 
       this.parser = window.parser = new Parser();
     },
@@ -35,7 +36,11 @@
 
       target = target || Compiler.target.js;
 
-      this.passes.each(function(pass) {
+      if (!this.passesForTarget[target]) {
+        throw 'Invalid output target: "' + target + "'";
+      }
+
+      this.passesForTarget[target].passes.each(function(pass) {
         var startTime = new Date().getTime();
         pass.run(tree, compiler);
         var endTime = new Date().getTime();
@@ -43,15 +48,11 @@
         if (onPassCompletedHandler) onPassCompletedHandler(pass.constructor.name, endTime - startTime);
       });
 
-      if (!this.outputPasses[target]) {
-        throw 'Invalid output target: "' + target + "'";
-      }
-
-      var output = this.outputPasses[target].run(tree, compiler).flush()
+      var output = this.passesForTarget[target].emitter.run(tree, compiler).flush()
       var totalEndTime = new Date().getTime();
 
       if (onPassCompletedHandler) {
-        onPassCompletedHandler(this.outputPasses[target].constructor.name, totalEndTime - totalStartTime);
+        onPassCompletedHandler(this.passesForTarget[target].emitter.constructor.name, totalEndTime - totalStartTime);
       }
 
       return output;
@@ -126,7 +127,7 @@
             break;
           default:
             if (arguments[i].is('token')) {
-              this.outputBuffer.push(arguments[i].text());
+              this.outputBuffer.push(arguments[i].value);
               continue;
             }
 

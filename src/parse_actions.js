@@ -3,6 +3,8 @@
    * Creates a new parse action for a list node.
    */
   function list(type) {
+    type = toTagName(type);
+
     return overload(function() {
       return new NodeList(type);
     }, function(firstElement) {
@@ -24,26 +26,11 @@
    * action passed in as the parameters to the constructor.
    */
   function node(type, childNames) {
+    type = toTagName(type);
+
     return function() {
       var args = $A(arguments);
-      if (!childNames) {
-        var nameCount = {};
-        childNames = [];
-
-        for (var i = 0; i < args.length; ++i) {
-          var node = args[i];
-          var camelCaseName = node.type.gsub(/(_)(.)/, function(match) {
-            return match[2].toUpperCase();
-          });
-
-          var count = nameCount[camelCaseName]++;
-          camelCaseName += count ? count : '';
-
-          childNames.push(camelCaseName);
-        }
-      }
-
-      var children = childNames.mapTo(args);
+      var children = childNames ? childNames.mapTo(args) : args;
       return new Node(type, children);
     };
   }
@@ -61,11 +48,31 @@
     ClassDeclaration: node('ClassDeclaration', ['name', 'parentClass', 'body']),
     ClassBody: list('ClassBody'),
     Method: node('Method', ['name', 'parameters', 'body']),
-    StaticMethod: node('StaticMethod'),
+
+    StaticMethod: function(method) {
+      return new Node('static_method', {
+        name: method.name,
+        parameters: method.parameters,
+        body: method.body
+      });
+    },
+
     InstanceVarDeclarationStatement: node('InstanceVarDeclarationStatement'),
     InstanceVarDeclarationList: list('InstanceVarDeclarationList'),
     InstanceVarDeclaration: node('InstanceVarDeclaration', ['name', 'value']),
-    StaticVarDeclarationStatement: node('StaticVarDeclarationStatement'),
+
+    StaticVarDeclarationStatement: function(variableStatement) {
+      var variableDeclarationList = variableStatement.variableDeclarationList;
+
+      variableDeclarationList.each(function(variableDeclaration) {
+        variableDeclaration.setType('static_var_declaration');
+      });
+
+      return new Node('static_var_declaration_statement', [
+        variableDeclarationList
+      ]);
+    },
+
     Accessor: node('Accessor', ['type', 'variables']),
     AccessorVariable: node('AccessorVariable', ['name']),
     AccessorList: list('AcessorList'),
@@ -164,7 +171,7 @@
     DoubleStringLiteral: node('DoubleStringLiteral'),
     SingleStringLiteral: node('SingleStringLiteral'),
     NativeCodeStringLiteral: node('NativeCodeStringLiteral', ['code']),
-    IdentifierReference: node('IdentifierReference'),
+    IdentifierReference: node('IdentifierReference', ['name']),
     PrimitiveLiteralExpression: node('PrimitiveLiteralExpression', ['value']),
     NestedExpression: node('NestedExpression'),
     Operator: node('Operator'),

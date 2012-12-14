@@ -1,4 +1,4 @@
-!function($) {
+!function() {
   pass = {};
 
   var Pass = klass(pass, {}, {
@@ -6,14 +6,7 @@
       this.selectorMappings = selectorMappings;
     },
 
-    run: function(ast, compiler) {
-      var _this = this;
-      $.each(this.selectorMappings, function(selector, fn) {
-        ast.find(selector).each(function(i) {
-          _this.handleMatch($(this), fn, compiler);
-        });
-      });
-    },
+    run: function(ast, compiler) {},
 
     handleMatch: function(match, fn, compiler) {
       fn.call(this, match, compiler);
@@ -29,10 +22,7 @@
       var replacement = fn.call(this, match, compiler);
       if (replacement === undefined) return;
 
-      if (replacement !== match) {
-        if (replacement) replacement.attr('class', match.attr('class'));
-        match.replaceWith(replacement);
-      }
+      if (replacement !== match) match.replaceWith(replacement);
     }
   });
 
@@ -47,45 +37,42 @@
         'proc',
         'closure',
         'method',
+        'static_method',
         'catch'
-      ].join(', ');
+      ];
 
       this.declarationSelector = [
         'class_declaration',
         'variable_declaration',
         'exception_var_declaration',
         'method',
+        'static_method',
         'instance_var_declaration',
+        'static_var_declaration',
         'closure_parameter',
         'function_declaration',
         'function_expression',
-      ].join(', ');
+      ];
 
       // We don't want any static methods or variables.
       this.instanceDeclarationSelector = [
-        'class_body > method',
-        'class_body > instance_var_declaration_statement instance_var_declaration',
-      ].join(', ');
+        'method',
+        'instance_var_declaration',
+      ];
 
       this.staticDeclarationSelector = [
-        'class_body > static_method > method',
-        'class_body > static_var_declaration_statement > variable_statement variable_declaration'
-      ].join(', ');
-    },
-
-    getSymbolName: function(symbolNode) {
-      return symbolNode.children('.name').text();
+        'static_method',
+        'static_variable_declaration'
+      ];
     },
 
     runWithScopeNode: function(scopeNode, scope, compiler) {
       // If the current node creates a new lexical scope,
       // create a new scope and add it to its own scope.
       var classContext = scopeNode.is('class_declaration') ? new Context(scopeNode) : undefined;
-      var context = scopeNode.is('class_body > method') ? scope.classContext : undefined;
+      var context = scopeNode.is('method') ? scope.classContext : undefined;
 
       scope = scope.subscope(classContext, context);
-
-      var symbolName = this.getSymbolName(scopeNode);
 
       // Lift all declarations in the current node into scope.
       this.liftDeclarations(scopeNode, scope, compiler);
@@ -95,13 +82,11 @@
     traverseChildren: function(node, scope, compiler) {
       var _this = this;
 
-      $.each(_this.selectorMappings, function(selector, fn) {
+      _this.selectorMappings.each(function(selector, fn) {
         if (node.is(selector)) _this.handleMatch(node, fn, scope, compiler);
       });
 
-      node.children().each(function(i) {
-        var child = $(this);
-
+      node.children().each(function(child) {
         if (child.is(_this.scopeSelector)) {
           _this.runWithScopeNode(child, scope, compiler);
         } else {
@@ -113,12 +98,10 @@
     liftDeclarations: function(currentNode, scope, compiler) {
       var _this = this;
 
-      currentNode.children().each(function(i) {
-        var child = $(this);
-
+      currentNode.children().each(function(child) {
         // If the child is a declaration, add it to the symbol table.
         if (child.is(_this.declarationSelector)) {
-          var symbolName = _this.getSymbolName(child);
+          var symbolName = child.name.value
 
           if (_this.onDeclaration) {
             // We treat statics like regular variables
@@ -163,10 +146,7 @@
       var replacement = fn.call(this, match, scope, compiler);
       if (replacement === undefined) return;
 
-      if (replacement !== match) {
-        if (replacement) replacement.attr('class', match.attr('class'));
-        match.replaceWith(replacement);
-      }
+      if (replacement !== match) match.replaceWith(replacement);
     }
   });
 
@@ -184,9 +164,9 @@
 
     runWithEmitter: function(node, emitter, compiler) {
       var _this = this;
-      $.each(this.selectorMappings, function(selector, fn) {
+      this.selectorMappings.each(function(selector, fn) {
         if (node.is(selector)) fn.call(_this, node, emitter, compiler);
       });
     }
   });
-}(jQuery);
+}();

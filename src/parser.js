@@ -24,6 +24,21 @@
       return tree;
     },
 
+    parseWithLexer: function(lexer) {
+      this.cache = {};
+
+      this.lexer = lexer;
+      this.lexer.currentPos = 0;
+      this.lexer.lastPos = 0;
+
+      var tree = this._parse('Program', 0, {});
+
+      // tree can be null, means there was just no value.
+      if (tree === undefined) this.error();
+
+      return tree;
+    },
+
     /**
      * Parses an individual rule of the grammar.
      */
@@ -85,7 +100,9 @@
 
         for (var j = 0, numElements = production.length; j < numElements; ++j) {
           var currentSymbol = production[j];
-          var nonCapture = !!currentSymbol.match(/^\(\?[^\)]+\)$/);
+          var nonCapture = currentSymbol[0] === '('
+            && currentSymbol[1] === '?'
+            && currentSymbol[currentSymbol.length - 1] === ')';
 
           if (nonCapture) currentSymbol = currentSymbol.substring(2, currentSymbol.length - 1);
 
@@ -148,31 +165,22 @@
      * the lexer, considering lookahead constraints.
      */
     _match: function(expectedTokenType) {
-      // If there is a negative lookahead condition, check to see that
-      // we passed it.
-      if (expectedTokenType.match(/^!.+/)) {
-        var passes = this.passesNegativeLookahead(expectedTokenType.substring(1));
-
-        return {
-          value: undefined,
-          matched: passes,
-          advance: passes
-        };
-      }
-
       var lexedToken = this.lexer.next();
       var advance = true;
 
       // Hit the end of the token stream so we failed.
       if (!lexedToken) return {};
 
+      var lexedTokenType = lexedToken.type;
       // We only capture the value of tokens surrounded by parens.
-      if (expectedTokenType.match(/^\([^\)]+\)$/)) {
+      if (expectedTokenType[0] === '(' && expectedTokenType[expectedTokenType.length - 1] === ')') {
         var capture = true;
-        expectedTokenType = expectedTokenType.substring(1, expectedTokenType.length - 1);
+
+        // This is faster than doing a substring to remove the parentheses.
+        lexedTokenType = '(' + lexedTokenType + ')';
       }
 
-      var tokensMatch = expectedTokenType === lexedToken.type;
+      var tokensMatch = expectedTokenType === lexedTokenType;
 
       var matched = tokensMatch || lexedToken.optional;
       var advance = tokensMatch || !lexedToken.optional;

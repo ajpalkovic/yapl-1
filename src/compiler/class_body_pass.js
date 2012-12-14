@@ -1,30 +1,26 @@
 !function($) {
-  var PROTOTYPE_TOKEN = $token(Token.identify('prototype').token);
-  var CALL_TOKEN = $token(Token.identify('call').token);
+  var PROTOTYPE_TOKEN = new TokenNode('prototype');
+  var CALL_TOKEN = new TokenNode('call');
 
   var CONSTRUCTOR_NAME = 'initialize';
 
   function makeThisReference(nameToken) {
-    return $node('property_access',
-      [$token(Token.THIS), nameToken],
-      ['member', 'memberPart']
-    );
+    return new Node('property_access', {
+      member: new Node('this', [new TokenNode(Token.THIS)]),
+      memberPart: nameToken
+    });
   }
 
   var ClassBodyTransformer = klass(pass, pass.ScopedTransformer, {
     initialize: function ClassBodyTransformer() {
-      // We use the child operator (>) because we don't want these methods
-      // to match nested classes.
       pass.ScopedTransformer.prototype.initialize.call(this, {
-        'class_declaration > .body': this.onClassBody,
-        'class_declaration > .body > method > .body member_identifier': this.onMemberIdentifier,
-        'class_declaration > .body > method super': this.onSuper,
-        'class_declaration > .body identifier_reference': this.onIdentifier,
-        'class_declaration > .body > static_method > method > .body identifier_reference': this.onIdentifier,
-        'class_declaration > .body > method > .body identifier_reference': this.onIdentifier,
-        'class_declaration > .body > accessor': this.onAccessor,
-        'class_declaration > .body > instance_var_declaration_statement': this.onInstanceVarDeclarationStatement,
-        'class_declaration > .body > method > .parameters auto_set_param': this.onAutoSetParam
+        'class_body': this.onClassBody,
+        'member_identifier': this.onMemberIdentifier,
+        'super': this.onSuper,
+        'identifier_reference': this.onIdentifier,
+        'accessor': this.onAccessor,
+        'instance_var_declaration_statement': this.onInstanceVarDeclarationStatement,
+        'auto_set_param': this.onAutoSetParam
       });
     },
 
@@ -32,90 +28,72 @@
       var constructorMethod = scope.classContext.methods[CONSTRUCTOR_NAME];
 
       if (!constructorMethod) {
-        constructorMethod = $node('method', [
-          $token(Token.identify(CONSTRUCTOR_NAME).token),
-          $node('parameter_list'),
-          $node('function_body')
-        ], [
-          'name',
-          'parameters',
-          'body'
-        ]);
+        constructorMethod = new Node('method', {
+          name: new TokenNode(CONSTRUCTOR_NAME),
+          parameters: new NodeList('parameter_list'),
+          body: new NodeList('function_body')
+        });
 
         scope.classContext.declare(constructorMethod);
         classBody.append(constructorMethod);
       }
 
-      constructorMethod.addClass('constructor');
+      constructorMethod.tagAs('constructor');
     },
 
     onMemberIdentifier: function(memberIdentifier, scope) {
-      var nameToken = memberIdentifier.children('token');
-
-      return makeThisReference(nameToken);
+      return makeThisReference(memberIdentifier.token);
     },
 
     onSuper: function(superCall, scope) {
-      var className = scope.context.declaration.children('.name').text();
-      var parentClass = scope.context.declaration.children('.parentClass');
+      var className = scope.context.declaration.name;
+      var parentClass = scope.context.declaration.parentClass;
 
-      if (!parentClass.size()) {
-        throw new error.NoSuperClassError(superCall.children('token').attr('line'), className);
+      if (!parentClass) {
+        throw new error.NoSuperClassError(superCall.line, className.value);
       }
 
-      var methodName = superCall.closest('method').children('.name');
-      var call = superCall.parent().is('call');
-      var isConstructor = superCall.closest('method').is('.constructor');
+      var method = superCall.closest('method');
+      var call = superCall.parent.is('call');
+      var isConstructor = method.is('constructor');
 
-      var superObject = isConstructor ? parentClass.clone() : $node('property_access', [
-        parentClass,
-        PROTOTYPE_TOKEN
-      ], [
-        'member',
-        'memberPart'
-      ]);
+      var superObject = isConstructor ? parentClass.clone() : new Node('property_access', {
+        member: parentClass,
+        memberPart: PROTOTYPE_TOKEN
+      });
 
       if (!call) return superObject;
 
-      var arguments = superCall.parent().children('.memberPart');
-      arguments.prepend($node('this', [$token(Token.THIS)]));
+      var arguments = superCall.parent.memberPart;
+      arguments.prepend(new Node('this', [new TokenNode(Token.THIS)]));
 
-      var superMethodCall = isConstructor ? CALL_TOKEN : $node('property_access', [
-        methodName,
-        CALL_TOKEN
-      ], [
-        'member',
-        'memberPart'
-      ]);
+      var superMethodCall = isConstructor ? CALL_TOKEN : new Node('property_access', {
+        member: methodName,
+        memberPart: CALL_TOKEN
+      });
 
-      return $node('property_access', [
-        superObject,
-        superMethodCall
-      ], [
-        'member',
-        'memberPart'
-      ]);
+      return new Node('property_access', {
+        member: superObject,
+        memberPart: superMethodCall
+      });
     },
 
     onIdentifier: function(identifierReference, scope) {
-      var name = identifierReference.children('token').text();
+      var name = identifierReference.token;
 
       // Handle static variables. We need to any parent contexts too, in case a nested
       // class is using a static variable of a parent class.
       while (scope && scope.classContext) {
-        if (scope.classContext.isInContext(name)) {
-          var declaration = scope.classContext.lookup(name);
+        if (scope.classContext.isInContext(name.value)) {
+          var declaration = scope.classContext.lookup(name.value);
 
-          if (declaration.is('static_method, static_var_declaration_statement > variable_statement variable_declaration')) {
-            return $node('property_access', [
-              scope.classContext.declaration.children('.name'),
-              declaration.children('.name')
-            ], [
-              'member',
-              'memberPart'
-            ]);
+          if (declaration.is('static_method', 'static_var_declaration')) {
+            return new Node('property_access', {
+              member: scope.classContext.declaration.name,
+              memberPart: declaration.name
+            });
           } else if (declaration.is('method')) {
-            return makeThisReference(declaration.children('.name'));
+            return makeThisReference(declaration.name);
           }
         }
 
@@ -124,30 +102,22 @@
     },
 
     onInstanceVarDeclarationStatement: function(instanceVarDeclarationStatement, scope) {
-      var instanceVarDeclarations = instanceVarDeclarationStatement
-        .children('instance_var_declaration_list')
-        .children('instance_var_declaration');
+      var instanceVarDeclarations = instanceVarDeclarationStatement.instanceVarDeclarationList;
 
-      instanceVarDeclarations.each(function(i) {
-        var instanceVarDeclaration = $(this);
+      instanceVarDeclarations.each(function(instanceVarDeclaration) {
+        var name = instanceVarDeclaration.name;
+        var value = instanceVarDeclaration.value || new TokenNode(Token.UNDEFINED);
 
-        var nameToken = instanceVarDeclaration.children('.name');
-        var value = instanceVarDeclaration.children('.value');
-        value = value.size() ? value : $token(Token.UNDEFINED);
-
-        var name = nameToken.text();
         var constructorMethod = scope.classContext.methods[CONSTRUCTOR_NAME];
         var doDeclaration = true;
 
-        constructorMethod.children('.parameters').children().each(function(i) {
-          var parameter = $(this);
-
+        constructorMethod.parameters.each(function(parameter) {
           if (parameter.is('auto_set_param')) {
-            var parameterName = parameter.children('variable_declaration').children('.name').text();
+            var parameterName = parameter.variableDeclaration.name;
 
             // We don't want to double declare/assign an instance variable if it
             // will be auto-assigned in the constructor anyway.
-            if (name === parameterName) {
+            if (name.value === parameterName.value) {
               doDeclaration = false;
               return;
             }

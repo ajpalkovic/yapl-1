@@ -77,6 +77,13 @@
     OPEN_BRACKET: '(\\[)'
   };
 
+  // Make sure we start the matches at the beginning of the string. I didn't add the carrot to the
+  // beginning of each regex because it kind of breaks the reusability of the regexes for future
+  // use.
+  for (regexType in regexes) {
+    regexes[regexType] = new RegExp('^' + regexes[regexType]);
+  }
+
   // Language reserved words
   var reserved = [
     ['function', 'FUNCTION'],
@@ -655,7 +662,7 @@
    */
   function identify(string, tokens) {
     for (var i = 0, len = advanced.length; i < len; ++i) {
-      var re = new RegExp('^' + advanced[i][0]);
+      var re = advanced[i][0];
       var matches = string.match(re);
 
       if (matches) return advanced[i][1](matches, string, tokens);
@@ -679,7 +686,7 @@
   tokens.push(['<<EOF>>', '<<EOF>>']);
   var typeLookup = prepare(tokens, prepare(reserved));
 
-  Token.regex = compiledRe;
+  Token.regex = new RegExp(compiledRe);
   Token.typeLookup = typeLookup;
   Token.identify = identify;
   Token.reverseLookup = reverseTokenLookup = {
