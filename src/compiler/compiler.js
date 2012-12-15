@@ -12,7 +12,7 @@
             new pass.CheckVarsDefinedPass(),
             // new pass.ExpandClosuresTransformer(),
             // new pass.ConditionalLoadTransformer(),
-            // new pass.ClassBodyTransformer(),
+            new pass.ClassBodyTransformer(),
             // new pass.SpecialParametersTransformer(),
             // new pass.ClassDeclarationTransformer(),
             // new pass.ProcTransformer(),

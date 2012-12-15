@@ -150,7 +150,7 @@
 
         tree = new Node(type, {
           member: tree,
-          memberPart: memberPart
+          memberPart: memberPart.children()[0]
         });
       }
 

@@ -74,7 +74,7 @@
 
     onPropertyAccess: function(propertyAccess, scope) {
       if (propertyAccess.memberPart.is('property_access')) {
-        this.onPropertyAccess(propertyAccess.children('.memberPart'), scope);
+        this.onPropertyAccess(propertyAccess.memberPart, scope);
       }
 
       if (propertyAccess.memberPart.is('identifier_reference')) {

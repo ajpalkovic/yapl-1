@@ -62,7 +62,7 @@
 
       this.staticDeclarationSelector = [
         'static_method',
-        'static_variable_declaration'
+        'static_var_declaration'
       ];
     },
 
@@ -86,7 +86,7 @@
         if (node.is(selector)) _this.handleMatch(node, fn, scope, compiler);
       });
 
-      node.children().each(function(child) {
+      node.each(function(child) {
         if (child.is(_this.scopeSelector)) {
           _this.runWithScopeNode(child, scope, compiler);
         } else {
@@ -98,7 +98,7 @@
     liftDeclarations: function(currentNode, scope, compiler) {
       var _this = this;
 
-      currentNode.children().each(function(child) {
+      currentNode.each(function(child) {
         // If the child is a declaration, add it to the symbol table.
         if (child.is(_this.declarationSelector)) {
           var symbolName = child.name.value

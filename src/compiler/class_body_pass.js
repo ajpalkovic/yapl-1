@@ -1,4 +1,4 @@
-!function($) {
+!function() {
   var PROTOTYPE_TOKEN = new TokenNode('prototype');
   var CALL_TOKEN = new TokenNode('call');
 
@@ -42,19 +42,19 @@
     },
 
     onMemberIdentifier: function(memberIdentifier, scope) {
-      return makeThisReference(memberIdentifier.token);
+      return makeThisReference(memberIdentifier.name);
     },
 
     onSuper: function(superCall, scope) {
       var className = scope.context.declaration.name;
       var parentClass = scope.context.declaration.parentClass;
 
-      if (!parentClass) {
+      if (parentClass.isNull()) {
         throw new error.NoSuperClassError(superCall.line, className.value);
       }
 
       var method = superCall.closest('method');
-      var call = superCall.parent.is('call');
+      var isCall = superCall.parent.is('call');
       var isConstructor = method.is('constructor');
 
       var superObject = isConstructor ? parentClass.clone() : new Node('property_access', {
@@ -62,7 +62,7 @@
         memberPart: PROTOTYPE_TOKEN
       });
 
-      if (!call) return superObject;
+      if (!isCall) return superObject;
 
       var arguments = superCall.parent.memberPart;
       arguments.prepend(new Node('this', [new TokenNode(Token.THIS)]));
@@ -79,9 +79,9 @@
     },
 
     onIdentifier: function(identifierReference, scope) {
-      var name = identifierReference.token;
+      var name = identifierReference.name;
 
-      // Handle static variables. We need to any parent contexts too, in case a nested
+      // Handle static variables. We need to look at any parent contexts too, in case a nested
       // class is using a static variable of a parent class.
       while (scope && scope.classContext) {
         if (scope.classContext.isInContext(name.value)) {
@@ -106,7 +106,8 @@
 
       instanceVarDeclarations.each(function(instanceVarDeclaration) {
         var name = instanceVarDeclaration.name;
-        var value = instanceVarDeclaration.value || new TokenNode(Token.UNDEFINED);
+        var value = instanceVarDeclaration.value.isNull()
+          ? new TokenNode(Token.UNDEFINED) : instanceVarDeclaration.value.isNull();
 
         var constructorMethod = scope.classContext.methods[CONSTRUCTOR_NAME];
         var doDeclaration = true;
@@ -125,12 +126,14 @@
         });
 
         if (doDeclaration) {
-          var memberAssign = $statement($assignment(
-            $node('member_identifier', [nameToken], ['name']),
+          var memberAssign = Node.statement(
+            Node.assignment(new Node('member_identifier', {
+              name: name
+            }),
             value
           ));
 
-          constructorMethod.children('.body').prepend(memberAssign);
+          constructorMethod.body.prepend(memberAssign);
         }
       });
 
@@ -138,40 +141,34 @@
     },
 
     onAutoSetParam: function(autoSetParam, scope) {
-      var body = autoSetParam.closest('method').children('.body');
-      var nameToken = autoSetParam.children('variable_declaration').children('.name');
-      var value = autoSetParam.children('variable_declaration').children('.value');
-      var name = nameToken.text();
+      var body = autoSetParam.closest('method').body;
+      var name = autoSetParam.variableDeclaration.name;
+      var value = autoSetParam.variableDeclaration.value;
 
-      if (!scope.classContext.instanceVariables[name]) {
-        throw new error.NoMemberToSet(nameToken.attr('line'), name);
+      if (!scope.classContext.instanceVariables[name.value]) {
+        throw new error.NoMemberToSet(name.line, name.value);
       }
 
-      value = value.size() ? $node('simple_expression', [
-        nameToken,
-        Token.LOGICAL_OR,
-        value
-      ], [
-        'left',
-        'operator',
-        'right'
-      ]) : nameToken;
+      // We need to handle the default argument possibility
+      value = value.notNull() ? new Node('simple_expression', {
+        left: name,
+        operator: new TokenNode(Token.LOGICAL_OR),
+        right: value
+      }) : name;
 
-      var setStatement = $statement($assignment(makeThisReference(nameToken), value));
+      var setStatement = Node.statement(Node.assignment(makeThisReference(name), value));
       body.prepend(setStatement);
 
       // Needs to be a variable declaration to be consistent
-      return $node('variable_declaration', [
-        nameToken
-      ], [
-        'name'
-      ]);
+      return new Node('variable_declaration', {
+        name: name
+      });
     },
 
     onAccessor: function(accessor, scope) {
-      var classBody = accessor.parent();
-      var type = accessor.children('.type').text();
-      var variables = accessor.children('.variables').children();
+      var classBody = accessor.parent;
+      var type = accessor.type;
+      var variables = accessor.variables;
       var typeMap = {
         'gets': makeGetter,
         'sets': makeSetter,
@@ -179,7 +176,7 @@
       };
 
       function makeNameToken(prefix, name) {
-        return $token(Token.identify(prefix + name.charAt(0).toUpperCase() + name.substring(1)).token);
+        return new TokenNode(prefix + name.charAt(0).toUpperCase() + name.substring(1));
       }
 
       function methodAlreadyExists(methodName) {
@@ -187,64 +184,51 @@
       }
 
       function makeGetter(variable) {
-        var nameToken = variable.children('.name');
-        var name = nameToken.text();
-        var getterName = makeNameToken('get', name);
+        var name = variable.name;
+        var getterName = makeNameToken('get', name.value);
 
-        if (methodAlreadyExists(getterName.text())) return;
+        if (methodAlreadyExists(getterName.value)) return;
 
-        var getter = $node('method', [
-          getterName,
-          $node('parameter_list'),
-          $node('function_body', [
-            $statement(
-              $node('keyword_statement', [
-                $token(Token.RETURN),
-                $node('member_identifier', [nameToken], ['name'])
-              ], [
-                'keyword',
-                'expression'
-              ])
+        var getter = new Node('method', {
+          name: getterName,
+          parameters: new NodeList('parameter_list'),
+          body: new NodeList('function_body', [
+            Node.statement(
+              new Node('keyword_statement', {
+                keyword: new TokenNode(Token.RETURN),
+                expression: new Node('member_identifier', {name: name})
+              })
             )
           ])
-        ], [
-          'name',
-          'parameters',
-          'body'
-        ]);
+        });
 
-        var memberIdentifier = getter.find('member_identifier');
-        this.handleMatch(memberIdentifier, this.onMemberIdentifier, scope);
+        // Handle the member identifier
+        this.handleMatch(getter.body.children()[0].statement.expression, this.onMemberIdentifier, scope);
 
         return getter;
       }
 
       function makeSetter(variable) {
-        var nameToken = variable.children('.name');
-        var name = nameToken.text();
-        var setterName = makeNameToken('set', name);
+        var name = variable.name;
+        var setterName = makeNameToken('set', name.value);
 
-        if (methodAlreadyExists(setterName.text())) return;
+        if (methodAlreadyExists(setterName.value)) return;
 
-        var setter = $node('method', [
-            setterName,
-            $node('parameter_list', [
-              $node('auto_set_param', [
-                $node('variable_declaration', [nameToken], ['name', 'value'])
-              ])
-            ]),
-            $node('function_body', [])
-          ], [
-            'name',
-            'parameters',
-            'body'
-          ]);
-
-        var autoSetParam = setter.find('auto_set_param');
+        var setter = new Node('method', {
+          name: setterName,
+          parameters: new NodeList('parameter_list', [
+            new Node('auto_set_param', [
+              new Node('variable_declaration', {
+                name: name,
+                value: undefined
+              })
+            ])
+          ]),
+          body: new NodeList('function_body')
+        });
 
         // We can just let the auto-setting param logic do this for us.
-        this.handleMatch(autoSetParam, this.onAutoSetParam, scope);
-
+        this.handleMatch(setter.parameters.children()[0], this.onAutoSetParam, scope);
         return setter;
       }
 
@@ -260,17 +244,12 @@
       }
 
       var _this = this;
-      variables.each(function() {
-        var variable = $(this);
-
-        var nameToken = variable.children('.name');
-        var name = nameToken.text();
-
-        var methods = typeMap[type].call(_this, variable);
+      variables.each(function(variable) {
+        var methods = typeMap[type.value].call(_this, variable);
         classBody.append.apply(classBody, methods);
       });
 
       return null;
     }
   });
-}(jQuery);
+}();

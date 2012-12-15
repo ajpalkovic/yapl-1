@@ -21,9 +21,9 @@
     <script type="text/javascript" src="compiler/class_declaration_pass.js"></script>
     <script type="text/javascript" src="compiler/call_or_identifier_pass.js"></script>
     <script type="text/javascript" src="compiler/syntax_augmentation_pass.js"></script>
-    <script type="text/javascript" src="compiler/cleanup_pass.js"></script>
+    <script type="text/javascript" src="compiler/cleanup_pass.js"></script>-->
     <script type="text/javascript" src="compiler/class_body_pass.js"></script>
-    <script type="text/javascript" src="compiler/proc_pass.js"></script>
+    <!--<script type="text/javascript" src="compiler/proc_pass.js"></script>
     <script type="text/javascript" src="compiler/to_js_pass.js"></script>-->
     <script type="text/javascript" src="compiler/compiler.js"></script>
 
@@ -31,6 +31,7 @@
       jQuery.noConflict();
       //window.compiler = new Compiler();
       parser = new Parser();
+      compiler = new Compiler();
 
       // function setupPassElements($) {
       //   var passContainer = $('#passes');
@@ -89,8 +90,12 @@
 
         console.profile("parser");
         result = parser.parse(code);
-        new pass.CheckVarsDefinedPass().run(result);
         console.profileEnd("parser");
+
+        compiler.passesForTarget['js'].passes.each(function(pass) {
+          pass.run(result);
+        });
+
         astElement.text(Compiler.stringify(result));
       }
 

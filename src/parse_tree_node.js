@@ -34,7 +34,7 @@
       // Most cases will just pass a single tag in.
       if (arguments.length === 1) {
         if (typeof arguments[0] === 'string' || arguments[0] instanceof String) {
-          return this.tags[arguments[0]]
+          return this.tags.hasOwnProperty(arguments[0])
         }
 
         var tags = arguments[0];
@@ -43,7 +43,15 @@
       }
 
       var _this = this;
-      return tags.reduce(function(previous, tag) { return previous || _this.tags[tag]; }, false);
+      return tags.reduce(function(previous, tag) { return previous || _this.tags.hasOwnProperty(tag); }, false);
+    },
+
+    notNull: function() {
+      return !this.isNull();
+    },
+
+    isNull: function() {
+      return this.is('null');
     },
 
     tagAs: function(tagName) {
@@ -51,7 +59,7 @@
     },
 
     untagAs: function(tagName) {
-      if (this.tags[tagName]) delete this.tags[tagName];
+      if (this.tags.hasOwnProperty(tagName)) delete this.tags[tagName];
     },
 
     append: function(child, name) {
@@ -104,10 +112,14 @@
     closest: function() {
       var current = this;
       while (current = current.parent) {
-        if (current.is.apply(this, arguments)) break;
+        if (current.is.apply(current, arguments)) break;
       }
 
       return current;
+    },
+
+    each: function(callback) {
+      return this.children().each(callback);
     },
 
     children: function() {
@@ -140,11 +152,26 @@
     }
   });
 
+  Node.statement = function(statement) {
+    return new Node('terminated_statement', {
+      statement: statement
+    });
+  };
+
+  Node.assignment = function(left, right) {
+    return new Node('assignment_expression', {
+      left: left,
+      operator: new Node('operator', [new TokenNode(Token.ASSIGN)]),
+      right: right
+    });
+  };
+
   var NodeList = klass(Node, {
-    initialize: function NodeList(type) {
+    initialize: function NodeList(type, children) {
       Node.prototype.initialize.call(this, type);
 
       this.childNodes = [];
+      this.append.apply(this, children);
     },
 
     append: function() {
@@ -176,7 +203,17 @@
     },
 
     each: function(callback) {
-      return this.childNodes.each(callback);
+      var result;
+
+      for (var i = 0; i < this.childNodes.length; ++i) {
+        var lengthBefore = this.childNodes.length;
+        result = callback(this.childNodes[i], i);
+
+        var lengthDifference = lengthBefore - this.childNodes.length;
+        if (lengthDifference > 0) i -= lengthDifference;
+      }
+
+      return result;
     },
 
     children: function() {
