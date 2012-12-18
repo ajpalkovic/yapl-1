@@ -11,9 +11,9 @@
       var validPropertyAccess = undefined;
 
       // If we have more safe loads to do (chained conditional loads)
-      if (conditionalLoad.children('conditional_load').size()) {
+      if (conditionalLoad.member.is('conditional_load')) {
         // We recursively safe load the previous conditional load
-        nonConditionalLoad = this.onConditionalLoad(conditionalLoad.children('conditional_load'));
+        nonConditionalLoad = this.onConditionalLoad(conditionalLoad.member);
 
         // And we know that the right hand side of the safe load is our
         // valid property access upon which we can tack another property load
@@ -24,7 +24,7 @@
         // eg. (a && a.b) && a.b.c
         //           |--|    |--|
         //         validPropertyAccess
-        validPropertyAccess = nonConditionalLoad.children('.right');
+        validPropertyAccess = nonConditionalLoad.right;
       } else {
         // In the base case, where there are no more loads to recursively perform,
         // our non-conditional load and valid property access are one and the same.
@@ -34,20 +34,23 @@
         // eg. a && a.b
         //          |
         //        validPropertyAccess
-        nonConditionalLoad = validPropertyAccess = conditionalLoad.children('.member');
+        nonConditionalLoad = validPropertyAccess = conditionalLoad.member;
       }
 
       // Now make a new valid property access with the old valid property access as the
       // property accesses upon which we tack our next property load.
-      validPropertyAccess = $node('PropertyAccess',
-        [validPropertyAccess, conditionalLoad.children('.memberPart')],
-        ['member', 'memberPart']);
+      validPropertyAccess = new Node('property_access', {
+        member: validPropertyAccess,
+        memberPart: conditionalLoad.memberPart
+      });
 
       // And we create a new 'check' that is evaluated at runtime and will short circuit if
       // the last property in nonConditional load does not exist.
-      nonConditionalLoad = $node('SimpleExpression',
-        [nonConditionalLoad, $token(Token.LOGICAL_AND), validPropertyAccess],
-        ['left', 'operator', 'right']);
+      nonConditionalLoad = new Node('simple_expression', {
+        left: nonConditionalLoad,
+        operator: Node.operator(Token.LOGICAL_AND),
+        right: validPropertyAccess
+      });
 
       return nonConditionalLoad;
     }

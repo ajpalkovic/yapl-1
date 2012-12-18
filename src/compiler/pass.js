@@ -6,7 +6,21 @@
       this.selectorMappings = selectorMappings;
     },
 
-    run: function(ast, compiler) {},
+    run: function(ast, compiler) {
+      this.traverseChildren(ast, compiler);
+    },
+
+    traverseChildren: function(node, compiler) {
+      var _this = this;
+
+      this.selectorMappings.each(function(selector, fn) {
+        if (node.is(selector)) _this.handleMatch(node, fn, compiler);
+      });
+
+      node.each(function(child) {
+        _this.traverseChildren(child, compiler);
+      });
+    },
 
     handleMatch: function(match, fn, compiler) {
       fn.call(this, match, compiler);
@@ -82,7 +96,7 @@
     traverseChildren: function(node, scope, compiler) {
       var _this = this;
 
-      _this.selectorMappings.each(function(selector, fn) {
+      this.selectorMappings.each(function(selector, fn) {
         if (node.is(selector)) _this.handleMatch(node, fn, scope, compiler);
       });
 
