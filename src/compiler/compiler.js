@@ -16,7 +16,7 @@
             new pass.SpecialParametersTransformer(),
             new pass.ClassDeclarationTransformer(),
             new pass.ProcTransformer(),
-            // new pass.CleanupTransformer()
+            new pass.CleanupTransformer()
           ],
 
           // emitter: new pass.ToJsEmitter()
