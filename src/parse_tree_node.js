@@ -73,7 +73,19 @@
       this.childNames[name] = true;
     },
 
+    insertBefore: function(otherNode) {
+      if (!otherNode.parent) return;
+
+      if (otherNode.parent instanceof NodeList) {
+        var index = otherNode.parent.children().indexOf(otherNode);
+        otherNode.parent.insert(index, this);
+      } else {
+        otherNode.parent.append(otherNode);
+      }
+    },
+
     removeChild: function(child, replacement) {
+      // Child can be the name of the child or the child itself.
       var childName = child;
 
       if (child instanceof Node) {
@@ -91,9 +103,9 @@
       child = this[childName];
 
       if (replacement) {
-        this[childName] = replacement;
+        this.append(replacement, childName);
       } else {
-        delete this[childName];
+        this[childName] = new NullNode();
         delete this.childNames[childName];
       }
 
@@ -148,7 +160,17 @@
     }(),
 
     clone: function() {
-      return Object.extend({}, this);
+      var children = {};
+      for (var childName in this.childNames) {
+        children[childName] = this.childNames[childName];
+      }
+
+      var clone = new Node(this.type, children);
+      for (var tagName in this.tags) {
+        clone.tagAs(tagName);
+      }
+
+      return clone;
     }
   });
 
@@ -164,6 +186,25 @@
       operator: new Node('operator', [new TokenNode(Token.ASSIGN)]),
       right: right
     });
+  };
+
+  Node.variable = function(name, value) {
+    var declaration = new Node('variable_declaration', {
+      name: name,
+      value: value
+    });
+
+    return Node.statement(
+      new Node('variable_statement', [
+        new Node('variable_declaration_list', [
+          declaration
+        ])
+      ])
+    );
+  };
+
+  Node.operator = function(type) {
+    return new Node('operator', [new TokenNode(type)]);
   };
 
   var NodeList = klass(Node, {
@@ -184,6 +225,18 @@
       this.childNodes = childNodes.concat(this.childNodes);
     },
 
+    insert: function() {
+      var args = $A(arguments);
+      var index = args.shift();
+
+      var childNodes = this._prepareChildNodes(args);
+      if (childNodes.length === 1) {
+        this.childNodes.insert(index, childNodes[0]);
+      } else {
+        this.childNodes = this.childNodes.slice(0, index).concat(childNodes).concat(this.childNodes.slice(index));
+      }
+    },
+
     _prepareChildNodes: function(childNodes) {
       var _this = this;
 
@@ -196,10 +249,14 @@
     },
 
     removeChild: function(child, replacement) {
+      if (!replacement.length) replacement = [replacement];
       child.parent = undefined;
 
       var index = this.childNodes.indexOf(child);
-      return (replacement ? this.childNodes.splice(index, 1, replacement) : this.childNodes.splice(index, 1))[0];
+      this.childNodes.splice(index, 1);
+      this.insert.apply(this, replacement.prepend(index));
+
+      return this;
     },
 
     each: function(callback) {
@@ -216,8 +273,21 @@
       return result;
     },
 
+    clone: function() {
+      var clone = new NodeList(this.type, this.childNodes);
+      for (var tagName in this.tags) {
+        clone.tagAs(tagName);
+      }
+
+      return clone;
+    },
+
     children: function() {
       return this.childNodes;
+    },
+
+    size: function() {
+      return this.childNodes.length;
     }
   });
 
@@ -244,5 +314,9 @@
       this.line = token.line;
       this.tokenType = token.type;
     },
+
+    clone: function() {
+      return new TokenNode(this.token);
+    }
   });
 }();

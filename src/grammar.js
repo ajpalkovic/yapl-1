@@ -969,8 +969,8 @@ var Grammar = {
   ForLoopStructure: {
     productions: [
       // ['StandardForStructure'],
-      ['ForInStructure'],
-      ['MultipleForInStructure'],
+      ['ForEachStructure'],
+      ['MultipleForEachStructure'],
       ['InflectedForStructure']
     ]
   },
@@ -996,14 +996,14 @@ var Grammar = {
     ]
   },
 
-  ForInStructure: {
+  ForEachStructure: {
     productions: [
       ['VariableDeclaration', 'IN', 'Expression', 'AT', 'VariableDeclaration'],
       ['VariableDeclaration', 'IN', 'Expression']
     ]
   },
 
-  MultipleForInStructure: {
+  MultipleForEachStructure: {
     productions: [
       ['VariableDeclaration', 'COMMA', 'VariableDeclaration', 'IN', 'Expression', 'AT', 'VariableDeclaration'],
       ['VariableDeclaration', 'COMMA', 'VariableDeclaration', 'IN', 'Expression']

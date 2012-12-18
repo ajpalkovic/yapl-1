@@ -1,4 +1,4 @@
-!function($) {
+!function() {
   function makeStringLiteral(quote, string, line) {
     var type = quote === '"' ? 'DOUBLE_STRING_LITERAL' : 'SINGLE_STRING_LITERAL';
 
@@ -9,7 +9,7 @@
                  // if this string spans multiple lines.
     });
 
-    return $node(type.toLowerCase(), [$token(token)]);
+    return new Node(type.toLowerCase(), [new TokenNode(token)]);
   }
 
   function interpolate(string, line, scope) {
@@ -32,7 +32,7 @@
     }
 
     function parseCode(code, lineOffset) {
-      return $node('nested_expression', [parser.parse(code, lineOffset)]);
+      return new Node('nested_expression', [parser.parse(code, lineOffset)]);
     }
 
     var interpolations = [];
@@ -49,6 +49,9 @@
         case '#':
           if (string[i + 1] === '{') {
             var end = balanceInterpolation(i + 1);
+            if (end === undefined) {
+              throw new error.UnbalancedStringInterpolation(lineOffset);
+            }
 
             var before = string.substring(endOfLastInterpolation, i);
             var code = string.substring(i + 2, end);
@@ -74,12 +77,9 @@
   }
 
   function fixIndentation(stringLiteral) {
-    var stringText = stringLiteral.children('token').text();
-    // Remove the quotes.
-    stringText = stringText.substring(1, stringText.length - 1);
-
-    var startingLineNumber = parseInt(stringLiteral.children('token').attr('line'));
-    var lines = stringText.split('\n');
+    var stringText = stringLiteral.children()[0];
+    var startingLineNumber = parseInt(stringText.line);
+    var lines = stringText.value.substring(1, stringText.value.length - 1).split('\n');
 
     var initialIndentation = compiler.parser.lexer.getIndent(startingLineNumber).value;
 
@@ -90,6 +90,7 @@
       var lineNumber = startingLineNumber + i + 1;
 
       try {
+        // Should grab the whitespace at the beginning of the line.
         var indentationToken = Token.identify(line).token;
       } catch (e) {
         // Whatever was at the beginning of the line in the string was not a proper
@@ -126,17 +127,15 @@
     },
 
     onNativeCodeStringLiteral: function(nativeCodeStringLiteral, scope, compiler) {
-      var parent = nativeCodeStringLiteral.parent();
+      var parent = nativeCodeStringLiteral.parent;
       nativeCodeStringLiteral.remove();
 
       var newLines = fixIndentation(nativeCodeStringLiteral);
-      var newCodeStringToken = Token.identify("'" + newLines.join('\n') + "'").token;
+      var newCodeStringToken = new Token({type: 'SINGLE_STRING_LITERAL', value: "'" + newLines.join('\n') + "'"});
 
-      nativeCodeStringLiteral = $node('native_code_string_literal', [
-        newCodeStringToken
-      ], [
-        'code'
-      ]);
+      nativeCodeStringLiteral = new Node('native_code_string_literal', {
+        code: new TokenNode(newCodeStringToken)
+      });
 
       if (parent.is('terminated_statement')) {
         parent.replaceWith(nativeCodeStringLiteral);
@@ -144,19 +143,19 @@
     },
 
     onStringLiteral: function(stringLiteral, scope, compiler) {
-      var quote = stringLiteral.children('token').text()[0];
+      var quote = stringLiteral.token.value[0];
       var newLines = fixIndentation(stringLiteral);
 
-      return makeStringLiteral(quote, newLines.join('\\n'), stringLiteral.children('token').attr('line'));
+      return makeStringLiteral(quote, newLines.join('\\n'), stringLiteral.token.line);
     },
 
     onDoubleStringLiteral: function(stringLiteral, scope, compiler) {
       // We make sure we indent properly before interpolating the string.
       stringLiteral = this.onStringLiteral(stringLiteral, scope, compiler);
 
-      var string = stringLiteral.children('token').text();
-      var line = parseInt(stringLiteral.children('token').attr('line'));
-      var interpolations = interpolate(string, line, scope);
+      var string = stringLiteral.token;
+      var line = parseInt(stringLiteral.token.line);
+      var interpolations = interpolate(string.value, line, scope);
 
       if (!interpolations.length) return stringLiteral;
 
@@ -170,18 +169,14 @@
         // coerced into a string
         seenStringLiteral = seenStringLiteral || (interpolation.is('single_string_literal') && i > 0);
 
-        concatenation = $node('additive_expression', [
-          concatenation,
-          $node('operator', [$token(new Token({type: 'PLUS', value: '+'}))]),
-          interpolation
-        ], [
-          'left',
-          'operator',
-          'right'
-        ]);
+        concatenation = new Node('additive_expression', {
+          left: concatenation,
+          operator: new Node('operator', [new TokenNode(new Token({type: 'PLUS', value: '+'}))]),
+          right: interpolation
+        });
       });
 
       return concatenation;
     }
   });
-}(jQuery);
+}();

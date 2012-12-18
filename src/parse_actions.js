@@ -96,7 +96,7 @@
     Proc: node('Proc', ['parameters', 'body']),
 
     ProcBody: overload(function() {
-      return new Node('proc_body');
+      return new NodeList('proc_body');
     }, function(body) {
       return body;
     }),
@@ -196,8 +196,8 @@
     DoUntilLoop: node('DoUntilLoop', ['body', 'condition']),
     ForLoop: node('ForLoop', ['structure', 'body']),
     StandardForStructure: node('StandardForStructure'),
-    ForInStructure: node('ForInStructure', ['value', 'collection', 'index']),
-    MultipleForInStructure: node('MultipleForInStructure', ['key', 'value', 'collection', 'index']),
+    ForEachStructure: node('ForEachStructure', ['value', 'collection', 'index']),
+    MultipleForEachStructure: node('MultipleForEachStructure', ['key', 'value', 'collection', 'index']),
     InflectedForStructure: node('InflectedForStructure', ['collection', 'index']),
     ContinueStatement: node('KeywordStatement', ['keyword']),
     BreakStatement: node('KeywordStatement', ['keyword']),

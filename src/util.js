@@ -1,10 +1,12 @@
 (function() {
   Array.prototype.insert = function(index, value) {
     this.splice(index, 0, value);
+    return this;
   };
 
   Array.prototype.prepend = function(value) {
     this.insert(0, value);
+    return this;
   };
 
   Array.prototype.peek = function() {
@@ -43,7 +45,7 @@
       deep = false;
 
     // Handle a deep copy situation
-    if ( typeof target === "boolean" ) {
+    if (typeof target === "boolean") {
       deep = target;
       target = arguments[1] || {};
       // skip the boolean and the target
@@ -51,45 +53,38 @@
     }
 
     // Handle case when target is a string or something (possible in deep copy)
-    if ( typeof target !== "object" && !jQuery.isFunction(target) ) {
+    if (typeof target !== "object") {
       target = {};
     }
 
-    // extend jQuery itself if only one argument is passed
-    if ( length === i ) {
-      target = this;
-      --i;
-    }
-
-    for ( ; i < length; i++ ) {
+    for (; i < length; i++) {
       // Only deal with non-null/undefined values
-      if ( (options = arguments[ i ]) != null ) {
+      if ((options = arguments[i]) != null) {
         // Extend the base object
-        for ( name in options ) {
-          src = target[ name ];
-          copy = options[ name ];
+        for (name in options) {
+          src = target[name];
+          copy = options[name];
 
           // Prevent never-ending loop
-          if ( target === copy ) {
+          if (target === copy) {
             continue;
           }
 
           // Recurse if we're merging plain objects or arrays
-          if ( deep && copy && ( jQuery.isPlainObject(copy) || (copyIsArray = jQuery.isArray(copy)) ) ) {
-            if ( copyIsArray ) {
+          if (deep && copy && ((copyIsArray = Array.isArray(copy)) || typeof copy === 'object')) {
+            if (copyIsArray) {
               copyIsArray = false;
-              clone = src && jQuery.isArray(src) ? src : [];
-
+              clone = src && Array.isArray(src) ? src : [];
             } else {
-              clone = src && jQuery.isPlainObject(src) ? src : {};
+              clone = src && typeof src === 'object' ? src : {};
             }
 
             // Never move original objects, clone them
-            target[ name ] = jQuery.extend( deep, clone, copy );
+            target[name] = Object.extend(deep, clone, copy);
 
           // Don't bring in undefined values
-          } else if ( copy !== undefined ) {
-            target[ name ] = copy;
+          } else if (copy !== undefined) {
+            target[name] = copy;
           }
         }
       }

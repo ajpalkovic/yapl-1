@@ -86,4 +86,11 @@
           'Incorrect indentation for multi-line string');
     }
   });
+
+  var UnbalancedStringInterpolation = klass(error, CompileError, {
+    initialize: function UnbalancedStringInterpolation(line) {
+      CompileError.prototype.initialize.call(this, line,
+          'Unbalanced string interpolation');
+    }
+  });
 }(jQuery);
