@@ -138,9 +138,28 @@
 
     children: function() {
       var children = [];
+      var filters = $A(arguments);
+
+      function doFilter(filter, child) {
+        return (typeof filter === 'function') ? filter(child) : child.is(filter);
+      }
 
       for (var childName in this.childNames) {
-        children.push(this[childName]);
+        switch (filters.length) {
+          case 0:
+            children.push(this[childName]);
+            break;
+
+          case 1:
+            if (doFilter(filters[0], this[childName])) children.push(this[childName]);
+
+          default:
+            filters.each(function(filter) {
+              if (doFilter(filters[0], this[childName])) {
+                children.push(this[childName]);
+              }
+            });
+        }
       }
 
       return children;
@@ -292,7 +311,27 @@
     },
 
     children: function() {
-      return this.childNodes;
+      if (!arguments.length) return this.childNodes;
+
+      var children = [];
+      var filters = $A(arguments);
+
+      function doFilter(filter, child) {
+        return (typeof filter === 'function') ? filter(child) : child.is(filter);
+      }
+
+      this.childNodes.each(function(childNode) {
+        switch (filters.length) {
+          case 1:
+            if (doFilter(filters[0], childNode)) children.push(childNode);
+          default:
+            filters.each(function(filter) {
+              if (doFilter(filter, childNode)) children.push(childNode);
+            });
+        }
+      });
+
+      return children;
     },
 
     size: function() {

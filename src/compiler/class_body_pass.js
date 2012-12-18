@@ -36,6 +36,9 @@
 
         scope.classContext.declare(constructorMethod);
         classBody.append(constructorMethod);
+
+        // For quick access later.
+        Node.prototype.append.call(classBody, constructorMethod, 'constructor');
       }
 
       constructorMethod.tagAs('constructor');
