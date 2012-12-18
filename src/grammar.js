@@ -860,7 +860,7 @@ var Grammar = {
 
   OneLineIfStatement: {
     productions: [
-      ['SimpleStatement', 'IF', 'Expression']
+      ['SimpleStatement', '(?NoNewline)', 'IF', 'Expression']
     ]
   },
 
@@ -872,19 +872,19 @@ var Grammar = {
 
   OneLineUnlessStatement: {
     productions: [
-      ['SimpleStatement', 'UNLESS', 'Expression']
+      ['SimpleStatement', '(?NoNewline)', 'UNLESS', 'Expression']
     ]
   },
 
   OneLineWhileStatement: {
     productions: [
-      ['SimpleStatement', 'WHILE', 'Expression']
+      ['SimpleStatement', '(?NoNewline)', 'WHILE', 'Expression']
     ]
   },
 
   OneLineUntilStatement: {
     productions: [
-      ['SimpleStatement', 'UNTIL', 'Expression']
+      ['SimpleStatement', '(?NoNewline)', 'UNTIL', 'Expression']
     ]
   },
 
