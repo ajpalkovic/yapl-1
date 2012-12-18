@@ -161,7 +161,8 @@
 
       // Needs to be a variable declaration to be consistent
       return new Node('variable_declaration', {
-        name: name
+        name: name,
+        value: null
       });
     },
 
@@ -219,7 +220,7 @@
             new Node('auto_set_param', [
               new Node('variable_declaration', {
                 name: name,
-                value: undefined
+                value: null
               })
             ])
           ]),

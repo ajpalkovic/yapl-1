@@ -7,56 +7,52 @@
     },
 
     onParameters: function(parameters, scope) {
-      var callable = parameters.parent();
-      var callableName = callable.children('.name');
-      var body = callable.children('.body');
+      var callable = parameters.parent;
+      var callableName = callable.name;
+      var body = callable.body;
 
-      var paramPrologue = $node('param_prologue');
+      var paramPrologue = [];
 
-      function parameterHandler(transformFn) {
-        return function(i) {
-          var parameter = $(this);
-          var nextParam = parameter.next();
-
-          // We need to get the actual declaration out of the auto-set.
-          if (parameter.is('auto_set_param')) {
-            parameter = parameter.children('variable_declaration');
+      function handleDefaultArgument(paramName, paramValue, nextParam) {
+        // The idea here is that if the current parameter has a default argument
+        // the next parameter needs one too. It prevents this from happening:
+        //
+        // function foo(a=1, b, c=3); end
+        // foo 4, 5
+        //
+        // In that code, it is unclear whether 'a' should get 4, or 'c' should get '5'.
+        // 'b' has to have at least one or the other.
+        if (nextParam.notNull()) {
+          if (nextParam.value.isNull()) {
+            throw new error.InvalidDefaultArgumentConfiguration(callableName.line, callableName.value);
           }
-
-          var paramName = parameter.children('.name');
-          var value = parameter.children('.value');
-
-          transformFn(paramName, value, nextParam);
-          parameter.replaceWith(paramName);
-        }
-      }
-
-      parameters.children().each(parameterHandler(function(paramName, value, nextParam) {
-        if (!value.size()) return;
-
-        if (nextParam.size() && !nextParam.find('.value').size()) {
-          throw new error.InvalidDefaultArgumentConfiguration(callableName.attr('line'), callableName.text());
         }
 
-        var assignment = $statement(
-          $assignment(
+        var assignment = Node.statement(
+          Node.assignment(
             paramName,
-            $node('simple_expression', [
-              paramName,
-              $node('operator', [Token.LOGICAL_OR]),
-              value
-            ], [
-              'left',
-              'operator',
-              'right'
-            ])
+            new Node('simple_expression', {
+              left: paramName,
+              operator: Node.operator(Token.LOGICAL_OR),
+              right: paramValue
+            })
           )
         );
 
-        paramPrologue.append(assignment);
-      }));
+        paramPrologue.push(assignment);
+      }
 
-      body.prepend(paramPrologue.children());
+      parameters.each(function(parameter, i) {
+        var nextParam = parameters.get(i + 1) || new NullNode();
+        var paramName = parameter.name;
+        var paramValue = parameter.value;
+
+        if (paramValue.notNull()) handleDefaultArgument(paramName, paramValue, nextParam);
+
+        parameter.replaceWith(paramName);
+      });
+
+      body.prepend.apply(body, paramPrologue);
     }
   });
 }(jQuery);

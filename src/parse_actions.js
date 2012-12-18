@@ -82,6 +82,7 @@
 
     FunctionExpression: overload(function(parameters, body) {
       return new Node('function_expression', {
+        name: null,
         parameters: parameters,
         body: body
       });
@@ -103,7 +104,6 @@
 
     ProcBodyLastElementOptTerminator: list('ProcBody'),
     ProcLastStatement: node('ProcLastStatement', ['statement']),
-
     EmptyList: list('EmptyList'),
     ParameterList: list('ParameterList'),
     AutoSetParam: node('AutoSetParam'),
