@@ -146,7 +146,12 @@
       var replacement = fn.call(this, match, scope, compiler);
       if (replacement === undefined) return;
 
-      if (replacement !== match) match.replaceWith(replacement);
+      if (replacement !== match) {
+        match.replaceWith(replacement);
+
+        // Could be 'null', which signifies a deletion, so don't traverse.
+        if (replacement) this.traverseChildren(replacement, scope, compiler);
+      }
     }
   });
 

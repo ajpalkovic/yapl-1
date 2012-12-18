@@ -204,8 +204,7 @@
 
         // Handle the member identifier
         this.handleMatch(getter.body.children()[0].statement.expression, this.onMemberIdentifier, scope);
-
-        return getter;
+        return [getter];
       }
 
       function makeSetter(variable) {
@@ -229,7 +228,7 @@
 
         // We can just let the auto-setting param logic do this for us.
         this.handleMatch(setter.parameters.children()[0], this.onAutoSetParam, scope);
-        return setter;
+        return [setter];
       }
 
       function makeAccessor(variable) {

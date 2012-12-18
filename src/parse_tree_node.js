@@ -110,15 +110,17 @@
       }
 
       child.parent = undefined;
-      return child;
+      return this;
     },
 
     remove: function() {
-      return this.parent && this.parent.removeChild(this);
+      if (this.parent) this.parent.removeChild(this);
+      return this;
     },
 
     replaceWith: function(other) {
-      return this.parent && this.parent.removeChild(this, other);
+      if (this.parent) this.parent.removeChild(this, other);
+      return this;
     },
 
     closest: function() {
@@ -162,7 +164,7 @@
     clone: function() {
       var children = {};
       for (var childName in this.childNames) {
-        children[childName] = this.childNames[childName];
+        children[childName] = this[childName];
       }
 
       var clone = new Node(this.type, children);
@@ -249,12 +251,15 @@
     },
 
     removeChild: function(child, replacement) {
-      if (!replacement.length) replacement = [replacement];
       child.parent = undefined;
 
       var index = this.childNodes.indexOf(child);
       this.childNodes.splice(index, 1);
-      this.insert.apply(this, replacement.prepend(index));
+
+      if (replacement) {
+        var insertArgs = replacement.length ? replacement : [replacement];
+        this.insert.apply(this, insertArgs.prepend(index));
+      }
 
       return this;
     },
@@ -271,6 +276,10 @@
       }
 
       return result;
+    },
+
+    get: function(index) {
+      return this.childNodes[index];
     },
 
     clone: function() {

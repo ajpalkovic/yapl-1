@@ -8,7 +8,7 @@
       value: new TokenNode(valueToken)
     });
 
-    variableDeclaration.value = valueNode;
+    variableDeclaration.append(valueNode, 'value');
   }
 
   var newVariableName = function() {
@@ -175,7 +175,7 @@
         value: new NullNode()
       });
 
-      inflectedForStructure.value = value;
+      inflectedForStructure.append(value, 'value');
 
       return this.onForEachStructure(inflectedForStructure, scope);
     },
@@ -190,14 +190,14 @@
       }
     },
 
-    onParallelAssignmentExpression: function(parallelAssignmentExpression, scope) {
+    onParallelAssignmentExpression: function(parallelAssignmentExpression, scope, compiler) {
       var leftHandSides = parallelAssignmentExpression.left;
       var rightHandSides = parallelAssignmentExpression.right;
 
-      var assignments = new Node('parallel_assignment_list');
+      var assignments = new NodeList('parallel_assignment_list');
 
-      leftHandSides.each(function(leftHandSide) {
-        var rightHandSide = rightHandSides[i] ? rightHandSides[i] : new TokenNode(Token.UNDEFINED);
+      leftHandSides.each(function(leftHandSide, i) {
+        var rightHandSide = rightHandSides.get(i) ? rightHandSides.get(i) : new TokenNode(Token.UNDEFINED);
 
         assignments.append(Node.assignment(leftHandSide, rightHandSide));
       });
@@ -222,7 +222,7 @@
 
       var negation = new Node('unary_expression', {
         operator: Node.operator(Token.LOGICAL_NOT),
-        expression: condition
+        expression: new Node('nested_expression', [condition])
       });
 
       return new Node('if_statement', {
@@ -237,7 +237,7 @@
 
       var negation = new Node('unary_expression', {
         operator: Node.operator(Token.LOGICAL_NOT),
-        expression: condition
+        expression: new Node('nested_expression', [condition])
       });
 
       return new Node('while_loop', {
@@ -252,7 +252,7 @@
 
       var negation = new Node('unary_expression', {
         operator: Node.operator(Token.LOGICAL_NOT),
-        expression: condition
+        expression: new Node('nested_expression', [condition])
       });
 
       return new Node('do_while_loop', {
@@ -265,7 +265,7 @@
       var expressions = caseElement.expressions;
       var body = caseElement.body;
 
-      if (expressions.children().length === 1) return;
+      if (expressions.size() === 1) return;
 
       var newCases = [];
       var length = expressions.size();
@@ -274,12 +274,12 @@
 
         // The last case in the fall-through has the body.
         var newCase = new Node('case', {
-          expression: expression
+          expressions: new NodeList('expression_list', [expression])
         });
 
-        if (i === length - 1) newCase.body = body;
+        if (i === length - 1) newCase.append(body, 'body');
 
-        newCases.push(newCases)
+        newCases.push(newCase);
       });
 
       return newCases;
@@ -287,12 +287,12 @@
 
     onBindExpression: function(bindExpression, scope) {
       var member = bindExpression.member;
-      var parameters = bindExpression.memberPart;
+      var arguments = bindExpression.memberPart.argumentList;
 
       // We don't want an 'EmptyList' because it won't get printed.
-      if (!parameters.size()) parameters = new Node('argument_list');
+      if (arguments.isNull() || !arguments.size()) arguments = new NodeList('argument_list');
 
-      parameters.prepend(new TokenNode(Token.THIS));
+      arguments.prepend(new TokenNode(Token.THIS));
 
       var bindFunction = new Node('property_access', {
         member: member,
@@ -301,7 +301,7 @@
 
       return new Node('call', {
         member: bindFunction,
-        memberPart: parameters
+        memberPart: arguments
       });
     },
 
@@ -408,7 +408,7 @@
     onOneLineUnlessStatement: function(oneLineUnlessStatement, scope) {
       return this.onUnlessStatement(new Node('unless_statement', {
         condition: oneLineUnlessStatement.condition,
-        body: Node.statement(oneLineIfStatement.body)
+        body: Node.statement(oneLineUnlessStatement.body)
       }));
     },
 
