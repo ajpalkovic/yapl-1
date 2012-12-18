@@ -66,7 +66,7 @@
       if (index.isNull()) {
         index = new Node('variable_declaration', {
           name: new TokenNode(newVariableName('__i')),
-          value: new NullNode()
+          value: null
         });
       }
 
@@ -123,7 +123,7 @@
       if (index.isNull()) {
         index = new Node('variable_declaration', {
           name: new TokenNode(newVariableName('__i')),
-          value: new NullNode()
+          value: null
         });
       }
 
@@ -158,12 +158,12 @@
           new Node('variable_declaration_list', [
             new Node('variable_declaration', {
               name: key.name,
-              value: new NullNode()
+              value: null
             })
           ])
         ]),
         collection: collectionToken,
-        index: new NullNode()
+        index: null
       });
     },
 
@@ -172,7 +172,7 @@
       var singularToken = new TokenNode(singularize(collectionName.value));
       var value = new Node('variable_declaration', {
         name: singularToken,
-        value: new NullNode()
+        value: null
       });
 
       inflectedForStructure.append(value, 'value');

@@ -7,55 +7,45 @@
     },
 
     onClosure: function(closure, scope, compiler) {
-      var parameters = closure.children('.parameters');
-      var body = closure.children('.body');
+      var parameters = closure.parameters;
+      var body = closure.body;
 
-      var callArguments = $node('argument_list');
-      var newParameters = $node('parameter_list');
+      var callArguments = new NodeList('argument_list');
+      var newParameters = new NodeList('parameter_list');
 
-      parameters.children().each(function(i) {
-        var parameter = $(this).clone();
+      parameters.each(function(parameter) {
+        var name = parameter.name;
+        var value = parameter.value;
 
-        var nameToken = parameter.children('.name');
-        var name = nameToken.text();
-
-        var valueToken = parameter.children('.value');
-        var value = valueToken.text();
-
-        var referencedNameToken = value ? valueToken : nameToken;
-        var referencedName = referencedNameToken.text();
+        var referencedName = value.notNull() ? value.name : name.name;
 
         // The closure construct does not allow parameter names that don't already shadow
         // the same symbol in some parent scope.
-        if (!scope.hasSymbol(referencedName)) {
-          throw new error.ReferenceError(referencedNameToken.attr('line'), referencedName);
+        if (!scope.hasSymbol(referencedName.value)) {
+          throw new error.ReferenceError(referencedName.line, referencedName.value);
         }
 
-        var newParameter = $node('variable_declaration', [nameToken], ['name']);
+        var newParameter = new Node('variable_declaration', {
+          name: name,
+          value: null
+        });
 
         newParameters.append(newParameter);
-        callArguments.append(value ? valueToken : nameToken.clone());
+        callArguments.append(referencedName);
       });
 
-      var nestedExpression = $node('nested_expression');
-      nestedExpression.attr('class', closure.attr('class'));
+      var nestedExpression = new Node('nested_expression', [
+        new Node('function_expression', {
+          name: null,
+          parameters: newParameters,
+          body: body
+        })
+      ]);
 
-      var anonymousFn = $node('function_expression',
-        [null, newParameters, body],
-        ['name', 'parameters', 'body']);
-
-
-      // We have to force the recursion on the newly created function, because the pass will not be run
-      // again over the newly created function expression
-      this.runWithScopeNode(anonymousFn, scope, compiler);
-
-      nestedExpression.append(anonymousFn);
-
-      var call = $node('call',
-        [nestedExpression, callArguments],
-        ['member', 'memberPart']);
-
-      return call;
+      return new Node('call', {
+        member: nestedExpression,
+        memberPart: callArguments
+      });
     }
   });
 }(jQuery);

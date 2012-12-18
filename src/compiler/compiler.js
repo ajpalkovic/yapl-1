@@ -10,7 +10,7 @@
             // before the compiler checks for them.
             new pass.SyntaxAugmentationTransformer(),
             new pass.CheckVarsDefinedPass(),
-            // new pass.ExpandClosuresTransformer(),
+            new pass.ExpandClosuresTransformer(),
             // new pass.ConditionalLoadTransformer(),
             new pass.ClassBodyTransformer(),
             // new pass.SpecialParametersTransformer(),
