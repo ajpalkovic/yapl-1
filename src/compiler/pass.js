@@ -33,10 +33,24 @@
     },
 
     handleMatch: function(match, fn, compiler) {
-      var replacement = fn.call(this, match, compiler);
+      var replacement = fn.call(this, match, scope, compiler);
       if (replacement === undefined) return;
 
-      if (replacement !== match) match.replaceWith(replacement);
+      if (replacement !== match) {
+        match.replaceWith(replacement);
+
+        // Could be 'null', which signifies a deletion, so don't traverse.
+        if (replacement) {
+          var _this = this;
+
+          // We do the iteration over the replacement's child so that
+          // the replacement itself doesn't get re-matched by the current pass
+          // into infinite recursion.
+          replacement.each(function(child) {
+            _this.traverseChildren(child, scope, compiler);
+          });
+        }
+      }
     }
   });
 
@@ -164,7 +178,16 @@
         match.replaceWith(replacement);
 
         // Could be 'null', which signifies a deletion, so don't traverse.
-        if (replacement) this.traverseChildren(replacement, scope, compiler);
+        if (replacement) {
+          var _this = this;
+
+          // We do the iteration over the replacement's child so that
+          // the replacement itself doesn't get re-matched by the current pass
+          // into infinite recursion.
+          replacement.each(function(child) {
+            _this.traverseChildren(child, scope, compiler);
+          });
+        }
       }
     }
   });

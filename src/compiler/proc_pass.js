@@ -1,4 +1,45 @@
-!function($) {
+function wrapStatementsForReturn(body) {
+  if (!body) return;
+
+  body.each(function(child) {
+    switch (child.type) {
+      case 'if_statement':
+        wrapStatementsForReturn(child.body);
+        wrapStatementsForReturn(child.elseIfList);
+        wrapStatementsForReturn(child.elsePart);
+        break;
+
+      case 'with_statement':
+        wrapStatementsForReturn(child.body);
+        break;
+
+      case 'switch_statement':
+        child.caseBlock.cases.each(function(caseNode) {
+          wrapStatementsForReturn(caseNode);
+        });
+
+        wrapStatementsForReturn(child.caseBlock['default']);
+        break;
+
+      case 'try_statement':
+        wrapStatementsForReturn(child.body);
+        wrapStatementsForReturn(child['catch']);
+        wrapStatementsForReturn(child['finally']);
+        break;
+
+      case 'terminated_statement':
+        var statement = child.statement;
+        if (statement.is('expression')) {
+          statement.replaceWith(Node.assignment(
+            new TokenNode('__ret'),
+            statement
+          ));
+        }
+    }
+  });
+}
+
+!function() {
   // We do procs in their own pass so we don't have to worry about other yapl-specific
   // syntax elements (such as one_line_if)
   var ProcTransformer = klass(pass, pass.ScopedTransformer, {
@@ -10,47 +51,35 @@
     },
 
     onProcBody: function(procBody, scope) {
-      function findLastBranchingElement(body) {
-        var lastChild = body.children().last();
+      if (!procBody.size()) return;
 
-        if (lastChild.is('if_statement')) {
-          var lastBranchingElement = findLastBranchingElement(lastChild.children('.body'));
-          return lastBranchingElement ? lastBranchingElement : lastChild;
-        }
-      }
+      wrapStatementsForReturn(procBody);
+      procBody.prepend(Node.variable(
+        new TokenNode('__ret'),
+        new TokenNode('undefined')
+      ));
 
-      var lastBranchingElement = findLastBranchingElement(procBody);
-      var lastExpressionStatement = lastBranchingElement ?
-        lastBranchingElement.children('.body').children().last() : procBody.children().last();
-
-      function _onLastExpressionStatement(lastExpressionStatement, scope) {
-        return $statement($node('keyword_statement', [
-          $token(Token.RETURN),
-          lastExpressionStatement.children('.statement')
-        ], [
-          'keyword',
-          'expression'
-        ]));
-      }
-
-      this.handleMatch(lastExpressionStatement, _onLastExpressionStatement, scope);
+      procBody.append(new Node('keyword_statement', {
+        keyword: new TokenNode(Token.RETURN),
+        expression: new Node('identifier_reference', {
+          name: new TokenNode('__ret')
+        })
+      }));
     },
 
     onProc: function(proc, scope, compiler) {
-      var body = proc.children('.body');
-      this.traverseChildren(body, scope, compiler);
+      var body = proc.body;
+      this.handleMatch(body, this.onProcBody, scope, compiler);
 
-      var procLastStatement = body.children('proc_last_statement');
+      var procLastStatement = body.children().last();
 
-      procLastStatement.replaceWith($statement(procLastStatement.children('.statement')));
+      if (procLastStatement) procLastStatement.replaceWith(Node.statement(procLastStatement.statement));
 
-      return $node('function_expression', [
-        proc.children('.parameters'),
-        $node('function_body', [body.children()])
-      ], [
-        'parameters',
-        'body'
-      ]);
+      return new Node('function_expression', {
+        name: null,
+        parameters: proc.parameters,
+        body: new NodeList('function_body', body.children())
+      });
     }
   });
-}(jQuery);
+}();

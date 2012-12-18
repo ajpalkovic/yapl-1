@@ -1,4 +1,4 @@
-!function($) {
+!function() {
   var ExpandClosuresTransformer = klass(pass, pass.ScopedTransformer, {
     initialize: function ExpandClosuresTransformer() {
       pass.ScopedTransformer.prototype.initialize.call(this, {
@@ -48,4 +48,4 @@
       });
     }
   });
-}(jQuery);
+}();

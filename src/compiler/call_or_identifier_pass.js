@@ -1,4 +1,4 @@
-!function($) {
+!function() {
   var CallOrIdentifierTransformer = klass(pass, pass.ScopedTransformer, {
     initialize: function CallOrIdentifierTransformer() {
       // what happens if we have something like:
@@ -48,4 +48,4 @@
       return identifierReference;
     }
   });
-}(jQuery);
+}();

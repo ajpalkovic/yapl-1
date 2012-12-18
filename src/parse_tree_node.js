@@ -1,4 +1,41 @@
 !function() {
+  // Makes it easy to create nodes that are expressions without having to
+  // create a new node type.
+  var expressionTypes = {
+    'closure': true,
+    'function_expression': true,
+    'proc': true,
+    'member_identifier': true,
+    'array_literal': true,
+    'object_literal': true,
+    'assignment_expression': true,
+    'parallel_assignment_expression': true,
+    'conditional_expression': true,
+    'simple_expression': true,
+    'additive_expression': true,
+    'term': true,
+    'exponentiation_expression': true,
+    'unary_expression': true,
+    'postfix_increment_expression': true,
+    'prefix_increment_expression': true,
+    'new_expression': true,
+    'property_access': true,
+    'bind_expression': true,
+    'array_dereference': true,
+    'conditional_load': true,
+    'call': true,
+    'this': true,
+    'super': true,
+    'symbol': true,
+    'regex_literal': true,
+    'double_string_literal': true,
+    'single_string_literal': true,
+    'native_code_string_literal': true,
+    'identifier_reference': true,
+    'primitive_literal_expression': true,
+    'nested_expression': true,
+  };
+
   var Node = klass({
     initialize: function Node(type, children) {
       children = children || {};
@@ -10,6 +47,9 @@
       this.childNames = {};
 
       this.tagAs(type);
+      if (expressionTypes.hasOwnProperty(type)) {
+        this.tagAs('expression');
+      }
 
       var _this = this
 
@@ -63,7 +103,7 @@
     },
 
     append: function(child, name) {
-      child = child || new NullNode();
+      child = child || Node.nullNode();
       name = name || this.makeName(child);
 
       if (child.parent) child = child.clone();
@@ -105,7 +145,7 @@
       if (replacement) {
         this.append(replacement, childName);
       } else {
-        this[childName] = new NullNode();
+        this[childName] = Node.nullNode();
         delete this.childNames[childName];
       }
 
@@ -194,6 +234,10 @@
       return clone;
     }
   });
+
+  Node.nullNode = function() {
+    return new Node('null');
+  };
 
   Node.statement = function(statement) {
     return new Node('terminated_statement', {
@@ -336,12 +380,6 @@
 
     size: function() {
       return this.childNodes.length;
-    }
-  });
-
-  var NullNode = klass(Node, {
-    initialize: function NullNode() {
-      Node.prototype.initialize.call(this, 'null');
     }
   });
 

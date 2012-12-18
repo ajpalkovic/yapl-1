@@ -1,4 +1,4 @@
-!function($) {
+!function() {
   var PROTOTYPE_TOKEN = new TokenNode('prototype');
   var SURROGATE_CTOR_TOKEN = new TokenNode('__surrogate_ctor');
   var CONSTRUCTOR_TOKEN = new TokenNode('constructor');
@@ -123,6 +123,8 @@
 
       // Handle the methods
       classBody.children('method').each(function(method) {
+        method.remove();
+
         wrapperBody.append(createFunctionOnPrototype(method, classNameToken));
       });
 
@@ -175,4 +177,4 @@
       return Node.variable(classNameToken, Node.assignment(namespacedClass, call));
     }
   });
-}(jQuery);
+}();

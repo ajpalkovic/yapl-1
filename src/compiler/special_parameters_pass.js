@@ -1,4 +1,4 @@
-!function($) {
+!function() {
   var SpecialParametersTransformer = klass(pass, pass.ScopedTransformer, {
     initialize: function SpecialParametersTransformer() {
       pass.ScopedTransformer.prototype.initialize.call(this, {
@@ -43,7 +43,7 @@
       }
 
       parameters.each(function(parameter, i) {
-        var nextParam = parameters.get(i + 1) || new NullNode();
+        var nextParam = parameters.get(i + 1) || Node.nullNode();
         var paramName = parameter.name;
         var paramValue = parameter.value;
 
@@ -55,4 +55,4 @@
       body.prepend.apply(body, paramPrologue);
     }
   });
-}(jQuery);
+}();

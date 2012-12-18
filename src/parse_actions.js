@@ -181,7 +181,28 @@
     ExternVariableStatement: node('ExternVariableStatement'),
     VariableDeclarationList: list('VariableDeclarationList'),
     VariableDeclaration: node('VariableDeclaration', ['name', 'value']),
-    IfStatement: node('IfStatement', ['condition', 'body']),
+
+    IfStatement: overload(function(condition, body) {
+      return ParseActions['IfStatement'](condition, body, null, null);
+    }, function(condition, body, rest) {
+      var ifStatement = new Node('if_statement', {
+        condition: condition,
+        body: body
+      });
+
+      ifStatement.append(rest);
+      ifStatement.append(null, rest.is('else_if_list') ? 'else_part' : 'else_if_list');
+
+      return ifStatement;
+    }, function(condition, body, elseIfList, elsePart) {
+      return new Node('if_statement', {
+        condition: condition,
+        body: body,
+        elseIfList: elseIfList,
+        elsePart: elsePart
+      });
+    }),
+
     OneLineIfStatement: node('OneLineIfStatement', ['body', 'condition']),
     UnlessStatement: node('UnlessStatement', ['condition', 'body']),
     OneLineUnlessStatement: node('OneLineUnlessStatement', ['body', 'condition']),
@@ -203,7 +224,7 @@
     BreakStatement: node('KeywordStatement', ['keyword']),
     ReturnStatement: node('KeywordStatement', ['keyword', 'expression']),
     WithStatement: node('WithStatement', ['scope', 'body']),
-    SwitchStatement: node('SwitchStatement', ['condition', 'cases']),
+    SwitchStatement: node('SwitchStatement', ['condition', 'caseBlock']),
     CaseBlock: node('CaseBlock', ['cases', 'default']),
     Case: node('Case', ['expressions', 'body']),
     CaseList: list('CaseList'),

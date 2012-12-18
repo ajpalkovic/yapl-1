@@ -1,4 +1,4 @@
-!function($) {
+!function() {
   var ConditionalLoadTransformer = klass(pass, pass.Transformer, {
     initialize: function ConditionalLoadTransformer() {
       pass.Transformer.prototype.initialize.call(this, {
@@ -55,4 +55,4 @@
       return nonConditionalLoad;
     }
   });
-}(jQuery);
+}();
