@@ -69,7 +69,7 @@
 
       // Make the constructor function, but rename it to the class name
       // so the created objects will have the right name.
-      var constructorMethod = classBody.constructor.remove();
+      var constructorMethod = classBody.children('constructor')[0].remove();
       constructorMethod = new Node('method', {
         name: classNameToken,
         parameters: constructorMethod.parameters,

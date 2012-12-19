@@ -36,9 +36,6 @@
 
         scope.classContext.declare(constructorMethod);
         classBody.append(constructorMethod);
-
-        // For quick access later.
-        Node.prototype.append.call(classBody, constructorMethod, 'constructor');
       }
 
       constructorMethod.tagAs('constructor');
@@ -110,7 +107,7 @@
       instanceVarDeclarations.each(function(instanceVarDeclaration) {
         var name = instanceVarDeclaration.name;
         var value = instanceVarDeclaration.value.isNull()
-          ? new TokenNode(Token.UNDEFINED) : instanceVarDeclaration.value.isNull();
+          ? new TokenNode(Token.UNDEFINED) : instanceVarDeclaration.value;
 
         var constructorMethod = scope.classContext.methods[CONSTRUCTOR_NAME];
         var doDeclaration = true;

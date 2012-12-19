@@ -19,7 +19,7 @@
             new pass.CleanupTransformer()
           ],
 
-          // emitter: new pass.ToJsEmitter()
+          emitter: new pass.ToJsEmitter()
         }
       };
 
@@ -104,6 +104,12 @@
       for (var i = 0, len = arguments.length; i < len; ++i) {
         if (!arguments[i]) continue;
 
+        // Handle nested arrays.
+        if (Array.prototype.isPrototypeOf(arguments[i])) {
+          this.e.apply(this, arguments[i]);
+          continue;
+        }
+
         switch (typeof arguments[i]) {
           case 'number':
           case 'string':
@@ -121,10 +127,7 @@
 
             this.outputBuffer.push(arguments[i]);
             break;
-          case 'function':
-            // We always pass the context.
-            arguments[i]();
-            break;
+
           default:
             if (arguments[i].is('token')) {
               this.outputBuffer.push(arguments[i].value);

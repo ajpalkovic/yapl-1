@@ -24,7 +24,7 @@
     <script type="text/javascript" src="compiler/cleanup_pass.js"></script>
     <script type="text/javascript" src="compiler/class_body_pass.js"></script>
     <script type="text/javascript" src="compiler/proc_pass.js"></script>
-    <!--<script type="text/javascript" src="compiler/to_js_pass.js"></script>-->
+    <script type="text/javascript" src="compiler/to_js_pass.js"></script>
     <script type="text/javascript" src="compiler/compiler.js"></script>
 
     <script type="text/javascript">
@@ -33,34 +33,35 @@
       parser = new Parser();
       compiler = new Compiler();
 
-      // function setupPassElements($) {
-      //   var passContainer = $('#passes');
-      //   passContainer.empty();
+      function setupPassElements($) {
+        var passContainer = $('#passes');
+        passContainer.empty();
 
-      //   var outputPass = compiler.outputPasses[Compiler.target.js];
+        var passes = compiler.passesForTarget[Compiler.target.js].passes;
+        var outputPass = compiler.passesForTarget[Compiler.target.js].emitter;
 
-      //   compiler.passes.concat([outputPass]).each(function(pass) {
-      //     var passElement = $('<div class="pass"></div>');
-      //     var nameElement = $('<div class="name"></div>');
+        passes.concat([outputPass]).each(function(pass) {
+          var passElement = $('<div class="pass"></div>');
+          var nameElement = $('<div class="name"></div>');
 
-      //     var statsElement = $([
-      //       '<div class="stats">',
-      //         '<div class="time"></div>',
-      //       '</div>'
-      //     ].join(''));
+          var statsElement = $([
+            '<div class="stats">',
+              '<div class="time"></div>',
+            '</div>'
+          ].join(''));
 
-      //     nameElement.text(pass.constructor.name);
-      //     passElement.append(nameElement);
-      //     passElement.append(statsElement);
+          nameElement.text(pass.constructor.name);
+          passElement.append(nameElement);
+          passElement.append(statsElement);
 
-      //     passElementLookup[pass.constructor.name] = passElement;
+          passElementLookup[pass.constructor.name] = passElement;
 
-      //     passContainer.append(passElement);
-      //   });
-      // }
+          passContainer.append(passElement);
+        });
+      }
 
       function parse($) {
-        // setupPassElements($);
+        setupPassElements($);
 
         var showParseTree = $('#show-parse-tree').is(':checked');
         var astElement = $('#ast');
@@ -70,33 +71,23 @@
         window.localStorage.setItem('code', code);
 
         // try {
-        //   var parseTreeText = showParseTree ? compiler.stringify(compiler.parse(code)) : '';
+          var parseTreeText = showParseTree ? Compiler.stringify(compiler.parse(code)) : '';
 
-        //   var output = compiler.compile(code, Compiler.target.js, function(pass, time) {
-        //     var element = passElementLookup[pass];
+          var output = compiler.compile(code, Compiler.target.js, function(pass, time) {
+            var element = passElementLookup[pass];
 
-        //     element.addClass('done');
-        //     var timeElement = element.find('.time');
-        //     timeElement.text('completed in: ' + time / 1000 + 's');
-        //   });
+            element.addClass('done');
+            var timeElement = element.find('.time');
+            timeElement.text('completed in: ' + time / 1000 + 's');
+          });
 
-        //   astElement.text(parseTreeText);
-        //   jsOutputElement.text(output);
+          astElement.text(parseTreeText);
+          jsOutputElement.text(output);
         // } catch (e) {
-        //   astElement.text(parseTreeText);
-        //   jsOutputElement.text('');
-        //   throw e;
+          // astElement.text(parseTreeText);
+          // jsOutputElement.text('');
+          // throw e;
         // }
-
-        // console.profile("parser");
-        result = parser.parse(code);
-        // console.profileEnd("parser");
-
-        compiler.passesForTarget['js'].passes.each(function(pass) {
-          pass.run(result);
-        });
-
-        astElement.text(Compiler.stringify(result));
       }
 
       var THRESHOLD = 200;

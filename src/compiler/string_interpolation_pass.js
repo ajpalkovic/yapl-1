@@ -32,7 +32,19 @@
     }
 
     function parseCode(code, lineOffset) {
-      return new Node('nested_expression', [parser.parse(code, lineOffset)]);
+      var codeTree = parser.parse(code, lineOffset);
+      var noFunction = codeTree.size() <= 1
+        && codeTree.get(0).is('terminated_statement')
+        && codeTree.get(0).statement.is('expression');
+
+      var interpolatedCode = noFunction ? codeTree.get(0).statement : new Node('proc', {
+        parameters: null,
+        body: codeTree
+      });
+
+      return new Node('nested_expression', [
+        interpolatedCode
+      ]);
     }
 
     var interpolations = [];

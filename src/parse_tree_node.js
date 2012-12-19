@@ -192,6 +192,7 @@
 
           case 1:
             if (doFilter(filters[0], this[childName])) children.push(this[childName]);
+            break;
 
           default:
             filters.each(function(filter) {
@@ -261,7 +262,7 @@
 
     return Node.statement(
       new Node('variable_statement', [
-        new Node('variable_declaration_list', [
+        new NodeList('variable_declaration_list', [
           declaration
         ])
       ])
@@ -368,6 +369,8 @@
         switch (filters.length) {
           case 1:
             if (doFilter(filters[0], childNode)) children.push(childNode);
+            break;
+
           default:
             filters.each(function(filter) {
               if (doFilter(filter, childNode)) children.push(childNode);

@@ -1,12 +1,9 @@
-!function($) {
+!function() {
   function makeListHandler(delimiter) {
     return function(list, emitter) {
-      var children = list.children();
-      var size = children.size();
+      var size = list.size();
 
-      children.each(function(i) {
-        var child = $(this);
-
+      list.each(function(child, i) {
         emitter.e(child);
         if (i < size - 1 && delimiter !== undefined) emitter.e(delimiter);
       });
@@ -92,9 +89,9 @@
     onCommaNewlineList: makeListHandler(',\n'),
 
     onFunctionDeclaration: function(functionDeclaration, emitter) {
-      var name = functionDeclaration.children('.name');
-      var parameters = functionDeclaration.children('.parameters');
-      var body = functionDeclaration.children('.body');
+      var name = functionDeclaration.name;
+      var parameters = functionDeclaration.parameters;
+      var body = functionDeclaration.body;
 
       emitter.e('function ', name, '(', parameters, ') {').blk()
         .e(body)
@@ -102,9 +99,9 @@
     },
 
     onFunctionExpression: function(functionExpression, emitter) {
-      var name = functionExpression.children('.name');
-      var parameters = functionExpression.children('.parameters');
-      var body = functionExpression.children('.body');
+      var name = functionExpression.name;
+      var parameters = functionExpression.parameters;
+      var body = functionExpression.body;
 
       emitter.e('function ', name, '(', parameters, ') {').blk()
         .e(body)
@@ -112,13 +109,13 @@
     },
 
     onArrayLiteral: function(arrayLiteral, emitter) {
-      var arrayElements = arrayLiteral.children('.elements');
+      var arrayElements = arrayLiteral.elements;
 
       emitter.e('[', arrayElements, ']');
     },
 
     onObjectLiteral: function(objectLiteral, emitter) {
-      var propertyList = objectLiteral.children('property_list');
+      var propertyList = objectLiteral.propertyList;
 
       emitter.e('{').blk()
         .e(propertyList)
@@ -126,38 +123,38 @@
     },
 
     onProperty: function(property, emitter) {
-      var name = property.children('.name');
-      var value = property.children('.value');
+      var name = property.name;
+      var value = property.value;
 
       emitter.e(name, ': ', value);
     },
 
     onExpression: function(assignmentExpression, emitter) {
-      var left = assignmentExpression.children('.left');
-      var operator = assignmentExpression.children('.operator');
-      var right = assignmentExpression.children('.right');
+      var left = assignmentExpression.left;
+      var operator = assignmentExpression.operator;
+      var right = assignmentExpression.right;
 
       emitter.e(left, ' ', operator, ' ', right);
     },
 
     onConditionalExpression: function(conditionalExpression, emitter) {
-      var condition = conditionalExpression.children('.condition');
-      var truePart = conditionalExpression.children('.truePart');
-      var falsePart = conditionalExpression.children('.falsePart');
+      var condition = conditionalExpression.condition;
+      var truePart = conditionalExpression.truePart;
+      var falsePart = conditionalExpression.falsePart;
 
       emitter.e(condition, ' ? ', truePart, ' : ', falsePart);
     },
 
     onUnaryExpression: function(unaryExpression, emitter) {
-      var operator = unaryExpression.children('.operator');
-      var expression = unaryExpression.children('.expression');
+      var operator = unaryExpression.operator;
+      var expression = unaryExpression.expression;
 
       emitter.e(operator, expression);
     },
 
     onPostfixIncrementExpression: function(postfixIncrementExpression, emitter) {
-      var expression = postfixIncrementExpression.children('.expression');
-      var operator = postfixIncrementExpression.children('.operator');
+      var expression = postfixIncrementExpression.expression;
+      var operator = postfixIncrementExpression.operator;
 
       emitter.e(expression, operator);
     },
@@ -169,22 +166,22 @@
     },
 
     onPropertyAccess: function(propertyAccess, emitter) {
-      var member = propertyAccess.children('.member');
-      var memberPart = propertyAccess.children('.memberPart');
+      var member = propertyAccess.member;
+      var memberPart = propertyAccess.memberPart;
 
       emitter.e(member, '.', memberPart);
     },
 
     onArrayDereference: function(arrayDereference, emitter) {
-      var member = arrayDereference.children('.member');
-      var memberPart = arrayDereference.children('.memberPart');
+      var member = arrayDereference.member;
+      var memberPart = arrayDereference.memberPart;
 
       emitter.e(member, '[', memberPart, ']');
     },
 
     onCall: function(call, emitter) {
-      var member = call.children('.member');
-      var memberPart = call.children('.memberPart');
+      var member = call.member;
+      var memberPart = call.memberPart;
 
       emitter.e(member, '(', memberPart, ')');
     },
@@ -202,7 +199,7 @@
     },
 
     onNativeCodeStringLiteral: function(nativeCodeStringLiteral, emitter) {
-      var code = nativeCodeStringLiteral.children('.code').text();
+      var code = nativeCodeStringLiteral.code.value;
 
       if (code.length) {
         // Removes the ticks
@@ -211,11 +208,11 @@
     },
 
     onIdentifierReference: function(identifierReference, emitter) {
-      emitter.e(identifierReference.children('token'));
+      emitter.e(identifierReference.name);
     },
 
     onPrimitiveLiteralExpression: function(primitiveLiteralExpression, emitter) {
-      var value = primitiveLiteralExpression.children('.value');
+      var value = primitiveLiteralExpression.value;
 
       emitter.e(value);
     },
@@ -225,37 +222,37 @@
     },
 
     onOperator: function(operator, emitter) {
-      emitter.e(operator.children('token'));
+      emitter.e(operator.token);
     },
 
     onTerminatedStatement: function(terminatedStatement, emitter) {
-      var statement = terminatedStatement.children('.statement');
+      var statement = terminatedStatement.statement;
 
-      if (statement.children().size()) emitter.e(statement, ';');
+      if (statement.notNull) emitter.e(statement, ';');
     },
 
     onVariableStatement: function(variableStatement, emitter) {
-      var declarations = variableStatement.children('variable_declaration_list');
+      var declarations = variableStatement.variableDeclarationList;
 
       emitter.e('var ', declarations);
     },
 
     onVariableDeclaration: function(variableDeclaration, emitter) {
-      var name = variableDeclaration.children('.name');
-      var value = variableDeclaration.children('.value');
+      var name = variableDeclaration.name;
+      var value = variableDeclaration.value;
 
-      if (value.size()) {
-        emitter.e($assignment(name, value));
+      if (value.notNull()) {
+        emitter.e(Node.assignment(name, value));
       } else {
         emitter.e(name);
       }
     },
 
     onIfStatement: function(ifStatement, emitter) {
-      var condition = ifStatement.children('.condition');
-      var body = ifStatement.children('.body');
-      var elseIfs = ifStatement.children('else_if_list');
-      var elsePart = ifStatement.children('else_part');
+      var condition = ifStatement.condition;
+      var body = ifStatement.body;
+      var elseIfs = ifStatement.elseIfList;
+      var elsePart = ifStatement.elsePart;
 
       emitter.e('if (', condition, ') {').blk()
         .e(body)
@@ -265,7 +262,7 @@
     },
 
     onElsePart: function(elsePart, emitter) {
-      var body = elsePart.children('.body');
+      var body = elsePart.body;
 
       emitter.e(' else {').blk()
         .e(body)
@@ -273,21 +270,18 @@
     },
 
     onElseIf: function(elseIf, emitter) {
-      var condition = elseIf.children('.condition');
-      var body = elseIf.children('.body');
+      var condition = elseIf.condition;
+      var body = elseIf.body;
 
-      emitter.e(' else ', $node('if_statement', [
-        condition,
-        body
-      ], [
-        'condition',
-        'body'
-      ]));
+      emitter.e(' else ', new Node('if_statement', {
+        condition: condition,
+        body: body
+      }));
     },
 
     onWhileLoop: function(whileLoop, emitter) {
-      var condition = whileLoop.children('.condition');
-      var body = whileLoop.children('.body');
+      var condition = whileLoop.condition;
+      var body = whileLoop.body;
 
       emitter.e('while (', condition, ') {').blk()
         .e(body)
@@ -295,8 +289,8 @@
     },
 
     onDoWhileLoop: function(doWhileLoop, emitter) {
-      var body = doWhileLoop.children('.body');
-      var condition = doWhileLoop.children('.condition');
+      var body = doWhileLoop.body;
+      var condition = doWhileLoop.condition;
 
       emitter.e('do {').blk()
         .e(body)
@@ -304,8 +298,8 @@
     },
 
     onForLoop: function(forLoop, emitter) {
-      var structure = forLoop.children('.structure');
-      var body = forLoop.children('.body');
+      var structure = forLoop.structure;
+      var body = forLoop.body;
 
       emitter.e('for (', structure, ') {').blk()
         .e(body)
@@ -313,23 +307,23 @@
     },
 
     onForInStructure: function(forInStructure, emitter) {
-      var key = forInStructure.children('.key');
-      var collection = forInStructure.children('.collection');
+      var key = forInStructure.key;
+      var collection = forInStructure.collection;
 
       emitter.e(key, ' in ', collection);
     },
 
     onStandardForStructure: function(standardForStructure, emitter) {
-      var variable = standardForStructure.children('.variable');
-      var condition = standardForStructure.children('.condition');
-      var increment = standardForStructure.children('.increment');
+      var variable = standardForStructure.variable;
+      var condition = standardForStructure.condition;
+      var increment = standardForStructure.increment;
 
       emitter.e(variable, ' ', condition, ' ', increment);
     },
 
     onWithStatement: function(withStatement, emitter) {
-      var scope = withStatement.children('.scope');
-      var body = withStatement.children('.body');
+      var scope = withStatement.scope;
+      var body = withStatement.body;
 
       emitter.e('with (', scope, ') {').blk()
         .e(body)
@@ -337,8 +331,8 @@
     },
 
     onSwitchStatement: function(switchStatement, emitter) {
-      var condition = switchStatement.children('.condition');
-      var cases = switchStatement.children('.cases');
+      var condition = switchStatement.condition;
+      var cases = switchStatement.cases;
 
       emitter.e('switch (', condition, ') {').blk()
         .e(cases)
@@ -346,15 +340,15 @@
     },
 
     onCaseBlock: function(caseBlock, emitter) {
-      var cases = caseBlock.children('.cases');
-      var defaultCase = caseBlock.children('.default');
+      var cases = caseBlock.cases;
+      var defaultCase = caseBlock.default;
 
       emitter.e(cases, defaultCase);
     },
 
     onCase: function(caseElement, emitter) {
-      var expression = caseElement.children('.expressions');
-      var body = caseElement.children('.body');
+      var expression = caseElement.expressions;
+      var body = caseElement.body;
 
       if (body.children().size()) {
         emitter.e('case ', expression, ':').blk()
@@ -366,7 +360,7 @@
     },
 
     onDefaultCase: function(defaultCase, emitter) {
-      var body = defaultCase.children('.body');
+      var body = defaultCase.body;
 
       emitter.e('default:').blk()
         .e(body)
@@ -374,9 +368,9 @@
     },
 
     onTryStatement: function(tryStatement, emitter) {
-      var body = tryStatement.children('.body');
-      var catchElement = tryStatement.children('.catch');
-      var finallyElement = tryStatement.children('.finally');
+      var body = tryStatement.body;
+      var catchElement = tryStatement.catch;
+      var finallyElement = tryStatement.finally;
 
       emitter.e('try {').blk()
         .e(body)
@@ -386,8 +380,8 @@
     },
 
     onCatch: function(catchElement, emitter) {
-      var exception = catchElement.children('.exception');
-      var body = catchElement.children('.body');
+      var exception = catchElement.exception;
+      var body = catchElement.body;
 
       emitter.e(' catch (', exception, ') {').blk()
         .e(body)
@@ -395,11 +389,11 @@
     },
 
     onExceptionVarDeclaration: function(exceptionVarDeclaration, emitter) {
-      emitter.e(exceptionVarDeclaration.children('.name'));
+      emitter.e(exceptionVarDeclaration.name);
     },
 
     onFinally: function(finallyElement, emitter) {
-      var body = finallyElement.children('.body');
+      var body = finallyElement.body;
 
       emitter.e(' finally {').blk()
         .e(body)
@@ -407,14 +401,14 @@
     },
 
     onKeywordStatement: function(keywordStatement, emitter) {
-      var keyword = keywordStatement.children('.keyword');
-      var expression = keywordStatement.children('.expression');
+      var keyword = keywordStatement.keyword;
+      var expression = keywordStatement.expression;
 
-      if (expression.size()) {
+      if (expression.notNull()) {
         emitter.e(keyword, ' ', expression);
       } else {
         emitter.e(keyword);
       }
     }
   });
-}(jQuery);
+}();
