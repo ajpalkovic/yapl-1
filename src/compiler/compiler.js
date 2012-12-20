@@ -48,11 +48,13 @@
         if (onPassCompletedHandler) onPassCompletedHandler(pass.constructor.name, endTime - startTime);
       });
 
+      var startTime = new Date().getTime();
       var output = this.passesForTarget[target].emitter.run(tree, compiler).flush()
+      var endTime = new Date().getTime();
       var totalEndTime = new Date().getTime();
 
       if (onPassCompletedHandler) {
-        onPassCompletedHandler(this.passesForTarget[target].emitter.constructor.name, totalEndTime - totalStartTime);
+        onPassCompletedHandler(this.passesForTarget[target].emitter.constructor.name, endTime - startTime);
       }
 
       return output;
@@ -113,19 +115,11 @@
         switch (typeof arguments[i]) {
           case 'number':
           case 'string':
-            var newlineIndex = arguments[i].indexOf('\n');
-            if (newlineIndex >= 0) {
-              var before = arguments[i].substring(0, newlineIndex);
-              var after = arguments[i].substring(newlineIndex + 1);
-
-              this.e(before);
+            if (arguments[i] === '\n') {
               this.nl();
-              this.e(after);
-
-              break;
+            } else {
+              this.outputBuffer.push(arguments[i]);
             }
-
-            this.outputBuffer.push(arguments[i]);
             break;
 
           default:

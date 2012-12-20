@@ -1,5 +1,16 @@
 !function() {
   function makeListHandler(delimiter) {
+
+    if (delimiter) {
+      var newlineIndex = delimiter.indexOf('\n');
+      if (newlineIndex >= 0) {
+        var before = delimiter.substring(0, newlineIndex);
+        var after = delimiter.substring(newlineIndex + 1);
+
+        delimiter = [before, '\n', after];
+      }
+    }
+
     return function(list, emitter) {
       var size = list.size();
 
@@ -203,7 +214,17 @@
 
       if (code.length) {
         // Removes the ticks
-        emitter.e(code.substring(1, code.length - 1));
+        code = code.substring(1, code.length - 1);
+        var lines = code.split('\n');
+        var toEmit = []
+
+        lines.each(function(line, i) {
+          toEmit.push(line);
+
+          if (i < lines.length - 1) toEmit.push('\n');
+        });
+
+        emitter.e(toEmit);
       }
     },
 

@@ -54,13 +54,21 @@
       var _this = this
 
       if (isObj) {
-        children.each(function(key, child) {
-          _this.append(child, key);
-        });
+        // children.each(function(key, child) {
+        //   _this.append(child, key);
+        // });
+
+        for (var childName in children) {
+          this.append(children[childName], childName);
+        }
       } else {
-        children.each(function(child) {
-          _this.append(child);
-        });
+        // children.each(function(child) {
+        //   _this.append(child);
+        // });
+
+        for (var i = 0; i < children.length; ++i) {
+          this.append(children[i]);
+        }
       }
     },
 
@@ -77,7 +85,8 @@
           return this.tags.hasOwnProperty(arguments[0])
         }
 
-        var tags = arguments[0];
+        // We assume it was an array
+        return this.is.apply(this, arguments[0]);
       } else {
         var tags = $A(arguments);
       }
