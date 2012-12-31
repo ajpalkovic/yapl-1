@@ -159,10 +159,22 @@
 
     MemberChain: list('MemberChain'),
     PropertyAccess: node('PropertyAccess', ['property']),
-    BindExpression: node('BindExpression', ['call']),
+
+    BindExpression: overload(function() {
+      var call = new Node('call', {
+        arguments: new NodeList('argument_list')
+      });
+
+      return ParseActions['BindExpression'](call);
+    }, function(call) {
+      return new Node('bind_expression', {
+        call: call
+      });
+    }),
+
     ArrayDereference: node('ArrayDereference', ['index']),
     ConditionalLoad: node('ConditionalLoad', ['property']),
-    Call: node('Call'),
+    Call: node('Call', ['arguments']),
     ArgumentList: list('ArgumentList'),
     This: node('This'),
     Super: node('Super'),

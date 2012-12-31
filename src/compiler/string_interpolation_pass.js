@@ -68,7 +68,7 @@
             var before = string.substring(endOfLastInterpolation, i);
             var code = string.substring(i + 2, end);
 
-            if (before.length) interpolations.push(makeStringLiteral('"', before, lineOffset));
+            if (before.length) interpolations.push(makeStringLiteral('"', before, line));
 
             interpolations.push(parseCode(code, lineOffset));
 

@@ -59,21 +59,20 @@ function wrapStatementsForReturn(body) {
         new TokenNode('undefined')
       ));
 
-      procBody.append(new Node('keyword_statement', {
+      procBody.append(Node.statement(new Node('keyword_statement', {
         keyword: new TokenNode(Token.RETURN),
         expression: new Node('identifier_reference', {
           name: new TokenNode('__ret')
         })
-      }));
+      })));
     },
 
     onProc: function(proc, scope, compiler) {
       var body = proc.body;
-      this.handleMatch(body, this.onProcBody, scope, compiler);
-
-      var procLastStatement = body.children().last();
-
+      var procLastStatement = body.children('proc_last_statement')[0];
       if (procLastStatement) procLastStatement.replaceWith(Node.statement(procLastStatement.statement));
+
+      this.handleMatch(body, this.onProcBody, scope, compiler);
 
       return new Node('function_expression', {
         name: null,
