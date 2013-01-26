@@ -45,6 +45,7 @@
       this.parent = undefined;
       this.tags = {};
       this.childNames = {};
+      this.childrenList = [];
 
       this.tagAs(type);
       if (expressionTypes.hasOwnProperty(type)) {
@@ -114,6 +115,7 @@
 
       this[name] = child;
       this.childNames[name] = true;
+      this.childrenList.push(child);
     },
 
     insertBefore: function(otherNode) {
@@ -144,6 +146,12 @@
       }
 
       child = this[childName];
+      for (var i = 0, currentChild; currentChild = this.childrenList[i]; i++) {
+        if (currentChild == child) {
+          this.childrenList.splice(i, 1);
+          break;
+        }
+      }
 
       if (replacement) {
         this.append(replacement, childName);
@@ -179,33 +187,15 @@
       return this.children().each(callback);
     },
 
-    children: function() {
+    children: function(filter) {
+      if (!filter) {
+        return this.childrenList;
+      }
+
       var children = [];
-      var filters = $A(arguments);
-
-      function doFilter(filter, child) {
-        return (typeof filter === 'function') ? filter(child) : child.is(filter);
+      for (var i = 0, child; child = this.childrenList[i]; i++) {
+        if (child.is(filter)) children.push(child);
       }
-
-      for (var childName in this.childNames) {
-        switch (filters.length) {
-          case 0:
-            children.push(this[childName]);
-            break;
-
-          case 1:
-            if (doFilter(filters[0], this[childName])) children.push(this[childName]);
-            break;
-
-          default:
-            filters.each(function(filter) {
-              if (doFilter(filters[0], this[childName])) {
-                children.push(this[childName]);
-              }
-            });
-        }
-      }
-
       return children;
     },
 
