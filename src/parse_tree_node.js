@@ -46,6 +46,7 @@
       this.tags = {};
       this.childNames = {};
       this.childrenList = [];
+      this.tagNumber = 0;
 
       this.tagAs(type);
       if (expressionTypes.hasOwnProperty(type)) {
@@ -84,10 +85,7 @@
     },
 
     isAnyOf: function(tags) {
-      for (var i = 0, tag; tag = tags[i]; i++) {
-        if (this.tags.hasOwnProperty(tag)) return true;
-      }
-      return false;
+      return this.tagNumber & tags;
     },
 
     notNull: function() {
@@ -100,10 +98,18 @@
 
     tagAs: function(tagName) {
       this.tags[tagName] = true;
+      var number = TagNumbers[tagName];
+      if (number) {
+        this.tagNumber = this.tagNumber | number;
+      }
     },
 
     untagAs: function(tagName) {
       if (this.tags.hasOwnProperty(tagName)) delete this.tags[tagName];
+      var number = TagNumbers[tagName];
+      if (number) {
+        this.tagNumber = this.tagNumber & (((1 << 16) - 1) ^ number);
+      }
     },
 
     append: function(child, name) {
@@ -221,8 +227,9 @@
       }
 
       var clone = new Node(this.type, children);
+      clone.tagNumber = this.tagNumber;
       for (var tagName in this.tags) {
-        clone.tagAs(tagName);
+        clone.tags[tagName] = true;
       }
 
       return clone;

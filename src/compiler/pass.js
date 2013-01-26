@@ -1,6 +1,39 @@
 !function() {
   pass = {};
 
+  TagNumbers = {
+    'catch': 1 << 0,
+    class_declaration: 1 << 1,
+    closure: 1 << 2,
+    closure_parameter: 1 << 3,
+    exception_var_declaration: 1 << 4,
+    function_declaration: 1 << 5,
+    function_expression: 1 << 6,
+    instance_var_declaration: 1 << 7,
+    method: 1 << 8,
+    proc: 1 << 9,
+    static_method: 1 << 10,
+    static_var_declaration: 1 << 11,
+    variable_declaration: 1 << 12
+  };
+
+  TagNumbers.scopeSelector = TagNumbers['class_declaration'] | TagNumbers['function_declaration'] |
+      TagNumbers['function_expression'] | TagNumbers['proc'] | TagNumbers['closure'] |
+      TagNumbers['method'] | TagNumbers['static_method'] | TagNumbers['catch'];
+
+  TagNumbers.declarationSelector = TagNumbers['class_declaration'] | TagNumbers['variable_declaration'] |
+      TagNumbers['exception_var_declaration'] | TagNumbers['method'] |
+      TagNumbers['static_method'] | TagNumbers['instance_var_declaration'] |
+      TagNumbers['static_var_declaration'] | TagNumbers['closure_parameter'] |
+      TagNumbers['function_declaration'] | TagNumbers['function_expression'];
+
+  // We don't want any static methods or variables.
+  TagNumbers.instanceDeclarationSelector =
+    TagNumbers['method'] | TagNumbers['instance_var_declaration'];
+
+  TagNumbers.staticDeclarationSelector =
+    TagNumbers['static_method'] | TagNumbers['static_var_declaration'];
+
   var Pass = klass(pass, {}, {
     initialize: function Pass(selectorMappings) {
       this.selectorMappings = selectorMappings;
@@ -57,41 +90,6 @@
   var ScopedPass = klass(pass, Pass, {
     initialize: function ScopedPass(selectorMappings) {
       pass.Pass.prototype.initialize.call(this, selectorMappings);
-
-      this.scopeSelector = [
-        'class_declaration',
-        'function_declaration',
-        'function_expression',
-        'proc',
-        'closure',
-        'method',
-        'static_method',
-        'catch'
-      ];
-
-      this.declarationSelector = [
-        'class_declaration',
-        'variable_declaration',
-        'exception_var_declaration',
-        'method',
-        'static_method',
-        'instance_var_declaration',
-        'static_var_declaration',
-        'closure_parameter',
-        'function_declaration',
-        'function_expression',
-      ];
-
-      // We don't want any static methods or variables.
-      this.instanceDeclarationSelector = [
-        'method',
-        'instance_var_declaration',
-      ];
-
-      this.staticDeclarationSelector = [
-        'static_method',
-        'static_var_declaration'
-      ];
     },
 
     runWithScopeNode: function(scopeNode, scope, compiler) {
@@ -115,7 +113,7 @@
       });
 
       node.each(function(child) {
-        if (child.isAnyOf(_this.scopeSelector)) {
+        if (child.isAnyOf(TagNumbers.scopeSelector)) {
           _this.runWithScopeNode(child, scope, compiler);
         } else {
           _this.traverseChildren(child, scope, compiler);
@@ -128,12 +126,12 @@
 
       currentNode.each(function(child) {
         // If the child is a declaration, add it to the symbol table.
-        if (child.isAnyOf(_this.declarationSelector)) {
+        if (child.isAnyOf(TagNumbers.declarationSelector)) {
           var symbolName = child.name.value
 
           if (_this.onDeclaration) {
             // We treat statics like regular variables
-            if (!child.isAnyOf(_this.instanceDeclarationSelector) || child.isAnyOf(_this.staticDeclarationSelector)) {
+            if (!child.isAnyOf(TagNumbers.instanceDeclarationSelector) || child.isAnyOf(TagNumbers.staticDeclarationSelector)) {
               _this.onDeclaration(symbolName, child, scope, compiler);
             } else {
               _this.onInstanceDeclaration(symbolName, child, scope, compiler);
@@ -143,10 +141,10 @@
           // Anonymous function expressions don't have a name.
           if (symbolName) {
             // Statics get treated as instance data and regular variables.
-            if (child.isAnyOf(_this.staticDeclarationSelector)) {
+            if (child.isAnyOf(TagNumbers.staticDeclarationSelector)) {
               scope.set(symbolName, child);
               scope.classContext.declare(child);
-            } else if (child.isAnyOf(_this.instanceDeclarationSelector)) {
+            } else if (child.isAnyOf(TagNumbers.instanceDeclarationSelector)) {
               scope.classContext.declare(child);
             } else {
               scope.set(symbolName, child);
@@ -156,7 +154,7 @@
 
         // We only traverse down if the child does not signify a new
         // lexical scope.
-        if (!child.isAnyOf(_this.scopeSelector)) _this.liftDeclarations(child, scope, compiler);
+        if (!child.isAnyOf(TagNumbers.scopeSelector)) _this.liftDeclarations(child, scope, compiler);
       });
     },
 
