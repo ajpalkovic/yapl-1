@@ -87,7 +87,7 @@
         if (scope.classContext.isInContext(name.value)) {
           var declaration = scope.classContext.lookup(name.value);
 
-          if (declaration.is('static_method', 'static_var_declaration')) {
+          if (declaration.is('static_method') || declaration.is('static_var_declaration')) {
             return new Node('property_access', {
               member: scope.classContext.declaration.name,
               memberPart: declaration.name
