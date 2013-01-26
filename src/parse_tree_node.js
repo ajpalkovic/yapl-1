@@ -45,6 +45,8 @@
       this.parent = undefined;
       this.tags = {};
       this.childNames = {};
+      this.childrenList = [];
+      this.tagNumber = 0;
 
       this.tagAs(type);
       if (expressionTypes.hasOwnProperty(type)) {
@@ -83,10 +85,7 @@
     },
 
     isAnyOf: function(tags) {
-      for (var i = 0, tag; tag = tags[i]; i++) {
-        if (this.tags.hasOwnProperty(tag)) return true;
-      }
-      return false;
+      return this.tagNumber & tags;
     },
 
     notNull: function() {
@@ -99,10 +98,18 @@
 
     tagAs: function(tagName) {
       this.tags[tagName] = true;
+      var number = TagNumbers[tagName];
+      if (number) {
+        this.tagNumber = this.tagNumber | number;
+      }
     },
 
     untagAs: function(tagName) {
       if (this.tags.hasOwnProperty(tagName)) delete this.tags[tagName];
+      var number = TagNumbers[tagName];
+      if (number) {
+        this.tagNumber = this.tagNumber & (((1 << 16) - 1) ^ number);
+      }
     },
 
     append: function(child, name) {
@@ -114,6 +121,7 @@
 
       this[name] = child;
       this.childNames[name] = true;
+      this.childrenList.push(child);
     },
 
     insertBefore: function(otherNode) {
@@ -144,6 +152,12 @@
       }
 
       child = this[childName];
+      for (var i = 0, currentChild; currentChild = this.childrenList[i]; i++) {
+        if (currentChild == child) {
+          this.childrenList.splice(i, 1);
+          break;
+        }
+      }
 
       if (replacement) {
         this.append(replacement, childName);
@@ -179,33 +193,15 @@
       return this.children().each(callback);
     },
 
-    children: function() {
+    children: function(filter) {
+      if (!filter) {
+        return this.childrenList;
+      }
+
       var children = [];
-      var filters = $A(arguments);
-
-      function doFilter(filter, child) {
-        return (typeof filter === 'function') ? filter(child) : child.is(filter);
+      for (var i = 0, child; child = this.childrenList[i]; i++) {
+        if (child.is(filter)) children.push(child);
       }
-
-      for (var childName in this.childNames) {
-        switch (filters.length) {
-          case 0:
-            children.push(this[childName]);
-            break;
-
-          case 1:
-            if (doFilter(filters[0], this[childName])) children.push(this[childName]);
-            break;
-
-          default:
-            filters.each(function(filter) {
-              if (doFilter(filters[0], this[childName])) {
-                children.push(this[childName]);
-              }
-            });
-        }
-      }
-
       return children;
     },
 
@@ -231,8 +227,9 @@
       }
 
       var clone = new Node(this.type, children);
+      clone.tagNumber = this.tagNumber;
       for (var tagName in this.tags) {
-        clone.tagAs(tagName);
+        clone.tags[tagName] = true;
       }
 
       return clone;

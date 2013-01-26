@@ -1140,6 +1140,46 @@ var Grammar = {
   }
 };
 
+var GrammarMetadata = {};
+(function() {
+  for (var name in Grammar) {
+    var data = Grammar[name];
+    for (var key in data) {
+      var rules = data[key];
+      if (rules instanceof Array) {
+        processRules(rules);
+      } else {
+        for (var ruleName in rules) {
+          processRules(rules[ruleName]);
+        }
+      }
+    }
+  }
+
+  function processRules(rules) {
+    for (var i = 0, rules; tokens = rules[i]; i++) {
+      for (var j = 0, token; token = tokens[j]; j++) {
+        var metadata = {
+          realToken: token,
+          isNonCapture: false,
+          isCapture: false
+        };
+        GrammarMetadata[token] = metadata;
+
+        if (token[0] === '(' && token[token.length - 1] === ')') {
+          metadata.isCapture = true;
+          metadata.realToken = token.substring(1, token.length - 1);
+
+          if (metadata.realToken[0] === '?') {
+            metadata.isNonCapture = true;
+            metadata.realToken = metadata.realToken.substring(1);
+          }
+        }
+      }
+    }
+  }
+})();
+
 // The parentheses for capturing/ignoring results are just for convenience. To
 // boost performance, we don't want the parser having to extract the actual name
 // of the symbol from the parentheses, so we do that here, and populate a capture
