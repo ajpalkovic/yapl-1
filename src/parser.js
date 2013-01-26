@@ -100,22 +100,21 @@
 
         for (var j = 0, numElements = production.length; j < numElements; ++j) {
           var currentSymbol = production[j];
-          var nonCapture = currentSymbol[0] === '('
-            && currentSymbol[1] === '?'
-            && currentSymbol[currentSymbol.length - 1] === ')';
-
-          if (nonCapture) currentSymbol = currentSymbol.substring(2, currentSymbol.length - 1);
+          var metadata = GrammarMetadata[currentSymbol];
+          if (metadata.isNonCapture) currentSymbol = metadata.realToken;
 
           if (Grammar[currentSymbol]) {
             var parseResult = this._parse(currentSymbol, this.lexer.currentPos, redefinitions);
 
             // We only take the result if the parse didn't fail (was undefined), and the symbol
             // wasn't specified as a non-capture.
-            if (parseResult !== undefined && !nonCapture) {
-              parseResults.push(parseResult);
+            if (parseResult !== undefined) {
+              if (!metadata.isNonCapture) {
+                parseResults.push(parseResult);
+              }
+            } else {
+              parseFailed = parseResult === undefined;
             }
-
-            parseFailed = parseResult === undefined;
           } else {
             var matchResult = this._match(currentSymbol);
             if (matchResult) {
@@ -172,21 +171,13 @@
       if (!lexedToken) return {};
 
       var lexedTokenType = lexedToken.type;
-      // We only capture the value of tokens surrounded by parens.
-      if (expectedTokenType[0] === '(' && expectedTokenType[expectedTokenType.length - 1] === ')') {
-        var capture = true;
-
-        // This is faster than doing a substring to remove the parentheses.
-        lexedTokenType = '(' + lexedTokenType + ')';
-      }
-
-      var tokensMatch = expectedTokenType === lexedTokenType;
-
+      var metadata = GrammarMetadata[expectedTokenType];
+      var tokensMatch = metadata.realToken === lexedTokenType;
       var matched = tokensMatch || lexedToken.optional;
       var advance = tokensMatch || !lexedToken.optional;
 
       return {
-        value: tokensMatch && capture && lexedToken,
+        value: tokensMatch && metadata.isCapture && lexedToken,
         matched: matched,
         advance: advance
       };
