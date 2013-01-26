@@ -93,6 +93,9 @@
     var startingLineNumber = parseInt(stringText.line);
     var lines = stringText.value.substring(1, stringText.value.length - 1).split('\n');
 
+    // TODO: this breaks when we use string literals in interpolations because
+    // it will ask the wrong lexer for the indentation.  We need to make sure we recursively
+    // parse interpolations with their own compilers so they have their own lexers.
     var initialIndentation = compiler.parser.lexer.getIndent(startingLineNumber).value;
 
     var newLines = lines.splice(1).map(function(line, i) {
