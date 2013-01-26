@@ -115,7 +115,7 @@
       });
 
       node.each(function(child) {
-        if (child.is(_this.scopeSelector)) {
+        if (child.isAnyOf(_this.scopeSelector)) {
           _this.runWithScopeNode(child, scope, compiler);
         } else {
           _this.traverseChildren(child, scope, compiler);
@@ -128,12 +128,12 @@
 
       currentNode.each(function(child) {
         // If the child is a declaration, add it to the symbol table.
-        if (child.is(_this.declarationSelector)) {
+        if (child.isAnyOf(_this.declarationSelector)) {
           var symbolName = child.name.value
 
           if (_this.onDeclaration) {
             // We treat statics like regular variables
-            if (!child.is(_this.instanceDeclarationSelector) || child.is(_this.staticDeclarationSelector)) {
+            if (!child.isAnyOf(_this.instanceDeclarationSelector) || child.isAnyOf(_this.staticDeclarationSelector)) {
               _this.onDeclaration(symbolName, child, scope, compiler);
             } else {
               _this.onInstanceDeclaration(symbolName, child, scope, compiler);
@@ -143,10 +143,10 @@
           // Anonymous function expressions don't have a name.
           if (symbolName) {
             // Statics get treated as instance data and regular variables.
-            if (child.is(_this.staticDeclarationSelector)) {
+            if (child.isAnyOf(_this.staticDeclarationSelector)) {
               scope.set(symbolName, child);
               scope.classContext.declare(child);
-            } else if (child.is(_this.instanceDeclarationSelector)) {
+            } else if (child.isAnyOf(_this.instanceDeclarationSelector)) {
               scope.classContext.declare(child);
             } else {
               scope.set(symbolName, child);
@@ -156,7 +156,7 @@
 
         // We only traverse down if the child does not signify a new
         // lexical scope.
-        if (!child.is(_this.scopeSelector)) _this.liftDeclarations(child, scope, compiler);
+        if (!child.isAnyOf(_this.scopeSelector)) _this.liftDeclarations(child, scope, compiler);
       });
     },
 

@@ -78,21 +78,15 @@
       this.tagAs(type);
     },
 
-    is: function() {
-      // Most cases will just pass a single tag in.
-      if (arguments.length === 1) {
-        if (typeof arguments[0] === 'string' || arguments[0] instanceof String) {
-          return this.tags.hasOwnProperty(arguments[0])
-        }
+    is: function(str) {
+      return this.tags.hasOwnProperty(str)
+    },
 
-        // We assume it was an array
-        return this.is.apply(this, arguments[0]);
-      } else {
-        var tags = $A(arguments);
+    isAnyOf: function(tags) {
+      for (var i = 0, tag; tag = tags[i]; i++) {
+        if (this.tags.hasOwnProperty(tag)) return true;
       }
-
-      var _this = this;
-      return tags.reduce(function(previous, tag) { return previous || _this.tags.hasOwnProperty(tag); }, false);
+      return false;
     },
 
     notNull: function() {
