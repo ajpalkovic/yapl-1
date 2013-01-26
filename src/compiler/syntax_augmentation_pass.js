@@ -290,7 +290,7 @@
       var arguments = bindExpression.memberPart.argumentList;
 
       // We don't want an 'EmptyList' because it won't get printed.
-      if (arguments.isNull() || !arguments.size()) arguments = new NodeList('argument_list');
+      if (!arguments || arguments.isNull() || !arguments.size()) arguments = new NodeList('argument_list');
 
       arguments.prepend(new TokenNode(Token.THIS));
 
