@@ -213,6 +213,7 @@
     },
 
     parse: function(input, lineOffset) {
+      this.lineOffset = lineOffset;
       this.cache = {};
 
       this.lexer = new Lexer(input, lineOffset);
@@ -222,6 +223,14 @@
       if (tree === undefined) this.error();
 
       return tree;
+    },
+
+    /**
+     * Error for the parser that is called when the parse fails.
+     */
+    error: function() {
+      var last = this.lexer.last();
+      throw ['ParseError(', last.line + this.lineOffset, '): Unexpected ', last.type].join('');
     }
   });
 }();

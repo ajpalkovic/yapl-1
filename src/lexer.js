@@ -16,12 +16,16 @@
      * Lexer implementation for Yapl.
      */
     initialize: function Lexer(string, lineOffset) {
-      this.tokens = this._lex(string, lineOffset || 1);
+      this.lineOffset = lineOffset = (lineOffset || 1);
+      this.tokens = this._lex(string, lineOffset);
+
       var lines = this.lines = [];
 
       this.tokens.each(function(token) {
-        lines[token.line] = lines[token.line] || [];
-        lines[token.line].push(token);
+        var line = token.line;
+
+        lines[line] = lines[line] || [];
+        lines[line].push(token);
       });
 
       this.currentPos = 0;

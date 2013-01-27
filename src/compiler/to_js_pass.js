@@ -243,7 +243,11 @@
     },
 
     onOperator: function(operator, emitter) {
-      emitter.e(operator.token);
+      if (['TYPEOF', 'DELETE'].include(operator.token.tokenType)) {
+        emitter.e(operator.token, ' ');
+      } else {
+        emitter.e(operator.token);
+      }
     },
 
     onTerminatedStatement: function(terminatedStatement, emitter) {

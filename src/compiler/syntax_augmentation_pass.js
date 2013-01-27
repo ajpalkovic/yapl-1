@@ -154,8 +154,8 @@
       body.append(indexIncrement);
 
       return new Node('for_in_structure', {
-        value: new Node('variable_statement', [
-          new Node('variable_declaration_list', [
+        key: new Node('variable_statement', [
+          new NodeList('variable_declaration_list', [
             new Node('variable_declaration', {
               name: key.name,
               value: null
@@ -287,7 +287,7 @@
 
     onBindExpression: function(bindExpression, scope) {
       var member = bindExpression.member;
-      var arguments = bindExpression.memberPart.argumentList;
+      var arguments = bindExpression.memberPart.arguments;
 
       // We don't want an 'EmptyList' because it won't get printed.
       if (!arguments || arguments.isNull() || !arguments.size()) arguments = new NodeList('argument_list');

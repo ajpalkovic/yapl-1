@@ -461,9 +461,8 @@
 
               // ECMA 262 regex flags are basically identifiers, and are
               // even defined as such.
-              var flagsRegex = new RegExp('^' + regexes.IDENTIFIER);
 
-              var matches = flagsRegex.exec(rest);
+              var matches = rest.match(regexes.IDENTIFIER);
               var endOfRegex = i + (matches ? matches[1].length : 0) + 1;
 
               return {
