@@ -1,0 +1,265 @@
+<html>
+  <head>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+
+    <script type="text/javascript" src="util.js"></script>
+    <script type="text/javascript" src="parse_tree_node.js"></script>
+    <script type="text/javascript" src="token.js"></script>
+    <script type="text/javascript" src="lexer.js"></script>
+    <script type="text/javascript" src="grammar.js"></script>
+    <script type="text/javascript" src="parse_actions.js"></script>
+    <script type="text/javascript" src="parser.js"></script>
+
+    <script type="text/javascript" src="compiler/errors.js"></script>
+    <script type="text/javascript" src="compiler/scope.js"></script>
+    <script type="text/javascript" src="compiler/pass.js"></script>
+    <script type="text/javascript" src="compiler/string_interpolation_pass.js"></script>
+    <script type="text/javascript" src="compiler/special_parameters_pass.js"></script>
+    <script type="text/javascript" src="compiler/expand_closures_pass.js"></script>
+    <script type="text/javascript" src="compiler/check_vars_defined_pass.js"></script>
+    <script type="text/javascript" src="compiler/conditional_load_pass.js"></script>
+    <script type="text/javascript" src="compiler/class_declaration_pass.js"></script>
+    <!--<script type="text/javascript" src="compiler/call_or_identifier_pass.js"></script>-->
+    <script type="text/javascript" src="compiler/syntax_augmentation_pass.js"></script>
+    <script type="text/javascript" src="compiler/cleanup_pass.js"></script>
+    <script type="text/javascript" src="compiler/class_body_pass.js"></script>
+    <script type="text/javascript" src="compiler/proc_pass.js"></script>
+    <script type="text/javascript" src="compiler/to_js_pass.js"></script>
+    <script type="text/javascript" src="compiler/compiler.js"></script>
+
+    <script src="codemirror-compressed.js"></script>
+
+    <script type="text/javascript">
+      var repeats = 20 || parseInt(getURLParameter('repeats'));
+      var test = getURLParameter('test');
+      var profile = getURLParameter('profile') != 'false';
+
+      function getURLParameter(name) {
+        var match = new RegExp(name + '=' + '(.+?)(&|$)').exec(location.search);
+        return match ? decodeURIComponent(match[1]) : null;
+      }
+
+      var TestCase = klass({
+        initialize: function TestCase(element) {
+          this.element = element;
+          this.name = element.find('.name').text();
+          this.compiler = new Compiler();
+
+          this.yapl = element.find('.yapl').text();
+          this.expected = element.find('.yapl-expected').text().trim().replace(/\n((\s*\n)+)/g, '\n');
+          this.expectedOutput = element.find('.output-expected').text().trim();
+        },
+
+        parse: function() {
+          console.log('Running: ' +this.name);
+
+          compiler = this.compiler; // WTF taylor.
+          this.parseTreeText = Compiler.stringify(this.compiler.parse(this.yapl));
+
+          if (profile) console.profile('Run: ' + this.name);
+          this.actual = this.compiler.compile(this.yapl, Compiler.target.js, function(pass, time) {});
+          if (profile) console.profileEnd('Run: ' + this.name);
+
+          this.actual = this.actual.trim().replace(/\n(\n)+/g, '\n');
+
+          return this;
+        },
+
+        toDom: function() {
+          this.dom = element = $('<div class="test-case"></div>').appendTo($('#content'));
+          $('' +
+            '<tr><th colspan=3><h1></h1></th></tr>' +
+            '<tr>' +
+              '<td rowspan=2><pre class="yapl"></pre></td>' +
+              '<td><pre class="output-actual"></pre></td>' +
+              '<td><pre class="output-expected"></pre></td>' +
+            '</tr>' +
+            '<tr>' +
+              '<td><textarea class="yapl-actual"></textarea></td>' +
+              '<td><textarea class="yapl-expected"></textarea></td>' +
+            '</tr>').appendTo(element);
+
+          element.find('h1').text(this.name);
+          element.find('.yapl').text(this.yapl);
+
+          var options = {
+            // lineWrapping: true,
+            // lineNumbers: true
+          };
+          var actual = CodeMirror.fromTextArea(element.find('.yapl-actual').val(this.actual).get(0), options);
+          var expected = CodeMirror.fromTextArea(element.find('.yapl-expected').val(this.expected).get(0), options);
+
+          var actualCount = actual.lineCount();
+          var expectedCount = expected.lineCount();
+          for (var i = 0; i < actualCount; i++) {
+            if (i >= expectedCount || actual.getLine(i).trim() != expected.getLine(i).trim()) {
+              actual.addLineClass(i, 'background', 'mismatch');
+            } else {
+              actual.addLineClass(i, 'background', 'match');
+            }
+          }
+
+          for (var i = 0; i < expectedCount; i++) {
+            if (i >= actualCount || expected.getLine(i).trim() != actual.getLine(i).trim()) {
+              expected.addLineClass(i, 'background', 'mismatch');
+            } else {
+              expected.addLineClass(i, 'background', 'match');
+            }
+          }
+
+          element.find('.output-expected').text(this.expectedOutput).addClass('mismatch');
+          this.actualOutput = String(eval(this.actual)).trim();
+          var klass = this.expectedOutput == this.actualOutput ? 'match' : 'mismatch';
+          element.find('.output-expected').removeClass('mismatch').addClass(klass);
+          element.find('.output-actual').text(this.actualOutput).addClass(klass);
+        }
+      });
+
+      jQuery(document).ready(function($) {
+        if (profile) {
+          console.profile('Run Tests');
+          var start = new Date();
+        }
+
+        var testCases = $('#test-cases > div');
+        var instances = [];
+        for (var i = 0, testCase; testCase = testCases[i]; i++) {
+          var instance = new TestCase($(testCase));
+          if (test && instance.name != test) continue;
+          instance.parse();
+          instances.push(instance);
+        }
+
+        if (profile) {
+          console.profileEnd('Run Tests');
+          console.log(new Date() - start);
+        }
+
+        $('#test-cases').remove();
+        for (var i = 0, instance; instance = instances[i]; i++) {
+          instance.toDom();
+        }
+      });
+    </script>
+
+    <link rel="stylesheet" type="text/css" media="all" href="codemirror.css" />
+    <style>
+      body {
+        margin: 0;
+      }
+
+      h1 {
+        color: #777777;
+        font-family: arial;
+        font-size: 1.5em;
+        height: 10%;
+      }
+
+      td {
+        vertical-align: top;
+      }
+
+      .codemirror {
+        height: 100%;
+        overflow: visible;
+      }
+
+      .match {
+        background-color: #F0FFF3;
+      }
+
+      .mismatch {
+        background-color: #FFF0F0;
+      }
+    </style>
+  </head>
+  <body>
+    <table id="content"></table>
+    <pre id="debug"></pre>
+    <div id="test-cases">
+      <div>
+        <div class='name'>Testing</div>
+        <div class='yapl'>
+var jQuery
+var console
+closure($=jQuery, c=console)
+  class Foo
+    @var a
+    accesses a
+
+    static var DEFAULT_MSG = 'hi'
+
+    def initialize(@a=1)
+
+    end
+
+    def on_response(response)
+      c.log "
+        The response: #{return response}
+        The context: #{return this}
+      "
+    end
+
+    def send_message(message=DEFAULT_MSG)
+      on_response#()(message)
+    end
+
+    def do_something(things=[])
+      for things at i
+        send_message thing
+      end
+    end
+  end
+
+  var x = Foo.new
+  x.do_something ['hello']
+end
+        </div>
+        <div class='yapl-expected'>
+var jQuery;
+var console;
+(function ($, c) {
+  var Foo = Foo = (function () {
+    function Foo(a) {
+      this.a = a || 1;
+    }
+    Foo.DEFAULT_MSG = 'hi';
+    Foo.prototype.on_response = function (response) {
+      c.log('' + "\n  The response: " + (function () {
+        var __ret = undefined;
+        return response;
+        ;
+      }) + "\n  The context: " + (function () {
+        var __ret = undefined;
+        return this;
+        ;
+      }) + "\n");
+    };
+    Foo.prototype.send_message = function (message) {
+      message = message || Foo.DEFAULT_MSG;
+      this.on_response.bind(this)(message);
+    };
+    Foo.prototype.do_something = function (things) {
+      things = things || [];
+      var __collection0 = things;
+      for (var i = 0; i &lt; __collection0.length; ++i) {
+        var thing = __collection0[i];
+        this.send_message(thing);
+      }
+    };
+    Foo.prototype.getA = function () {
+      return this.a;
+    };
+    Foo.prototype.setA = function (a) {
+      this.a = a;
+    };
+    Foo.prototype.constructor = Foo;
+    return Foo;
+  })();
+  var x = new Foo;
+  x.do_something(['hello']);
+})(jQuery, console);
+    </div>
+    <div class='output-expected'>undefined</div>
+  </body>
+</html>

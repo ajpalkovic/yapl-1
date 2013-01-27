@@ -84,7 +84,7 @@
       body.prepend(valueVariableAssignment);
 
       return new Node('standard_for_structure', {
-        varaible: Node.variable(index.name, index.value),
+        variable: Node.variable(index.name, index.value),
 
         condition: Node.statement(new Node('simple_expression', {
           left: index.name,
